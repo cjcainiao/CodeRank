@@ -12,36 +12,27 @@ import com.github.dockerjava.api.model.AccessMode;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Volume;
-import com.github.dockerjava.core.DefaultDockerClientConfig;
-import com.github.dockerjava.core.DockerClientBuilder;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
+import java.io.BufferedReader;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
-/**
- * python代码沙箱
- */
-@Component("python")
-public class pythonCodebox extends AbstractCodeBox {
+@Component("java")
+public class javaCodebox extends AbstractCodeBox {
 
     private final DockerClient dockerClient;
     private final QuestionMapper questionMapper;
     private final QuestionSubmitMapper questionSubmitMapper;
 
-    // 镜像
-    private String Images = "pythoncodebox:latest";
-
-    public pythonCodebox(DockerClient dockerClient, QuestionMapper questionMapper, QuestionSubmitMapper questionSubmitMapper) {
+    protected javaCodebox(QuestionSubmitMapper questionSubmitMapper, DockerClient dockerClient, QuestionMapper questionMapper, QuestionSubmitMapper questionSubmitMapper1) {
         super(questionSubmitMapper);
         this.dockerClient = dockerClient;
         this.questionMapper = questionMapper;
-        this.questionSubmitMapper = questionSubmitMapper;
+        this.questionSubmitMapper = questionSubmitMapper1;
     }
 
+    private String Images = "javacodebox:latest";
 
     @Override
     protected void run(String taskPath, Task task) {
@@ -92,7 +83,55 @@ public class pythonCodebox extends AbstractCodeBox {
     }
 
     @Override
-    protected void compile(String taskPath,Task task) {
+    protected void compile(String taskPath, Task task) {
+        File sourceFile = new File(taskPath, "Main.java");
+        if (!sourceFile.exists()) {
+            System.out.println("源文件不存在: " + sourceFile.getAbsolutePath());
+            return;
+        }
 
+        File outputDir = new File(taskPath);
+        if (!outputDir.exists()) {
+            outputDir.mkdirs();
+        }
+
+        String[] cmd = {
+                "javac",
+                "-J-Duser.language=en",
+                "-J-Dfile.encoding=UTF-8",
+                "-encoding", "UTF-8",
+                sourceFile.getAbsolutePath(),
+                "-d", outputDir.getAbsolutePath()
+        };
+
+        try {
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+
+            StringBuffer compileMsg = new StringBuffer();
+
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream(), "UTF-8"))) {
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    compileMsg.append(line).append("\n");
+                }
+            }
+
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                QuestionSubmit submit = new QuestionSubmit();
+                submit.setId(task.getId());
+                submit.setStatus(2);
+                submit.setErrorMsg(compileMsg.toString());
+                questionSubmitMapper.updateById(submit);
+                throw new RuntimeException("编译错误");
+            }
+
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

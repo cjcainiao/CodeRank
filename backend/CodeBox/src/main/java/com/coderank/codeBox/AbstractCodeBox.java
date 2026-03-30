@@ -41,7 +41,7 @@ public abstract class AbstractCodeBox implements CodeBox {
         String taskPath = create_task(task);
 
         // 编译代码
-        compile(taskPath);
+        compile(taskPath,task);
 
         // 运行代码
         run(taskPath, task);
@@ -172,6 +172,6 @@ public abstract class AbstractCodeBox implements CodeBox {
 
     protected abstract void run(String taskPath, Task task);
 
-    protected abstract void compile(String taskPath);
+    protected abstract void compile(String taskPath,Task task);
 
 }
