@@ -1,0 +1,22 @@
+# 项目排除文件
+.idea
+.vscode
+
+# client排除文件
+backend/Client/.idea
+backend/Client/.vscode
+backend/Client/target/**
+backend/Client/src/test/**
+
+# Codebox排除文件
+backend/CodeBox/.idea
+backend/CodeBox/.vscode
+backend/CodeBox/target/**
+backend/CodeBox/src/test/**
+
+
+# web排除文件
+Web/CodeRank/.idea
+Web/CodeRank/.vscode
+Web/CodeRank/node_modules/**
+Web/CodeRank/dist/**
