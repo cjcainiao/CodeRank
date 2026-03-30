@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.coderank.mapper.QuestionMapper">
+
+    <resultMap id="BaseResultMap" type="com.coderank.entity.Question">
+            <id property="questionId" column="question_id" />
+            <result property="title" column="title" />
+            <result property="content" column="content" />
+            <result property="description" column="description" />
+            <result property="type" column="type" />
+            <result property="submitCount" column="submit_count" />
+            <result property="acceptCount" column="accept_count" />
+            <result property="tags" column="tags" />
+            <result property="difficulty" column="difficulty" />
+            <result property="author" column="author" />
+            <result property="memory" column="memory" />
+            <result property="timeLimit" column="time_limit" />
+            <result property="testDataPath" column="test_data_path" />
+            <result property="outputScript" column="output_script" />
+            <result property="createTime" column="create_time" />
+            <result property="updateTime" column="update_time" />
+            <result property="isDelete" column="is_delete" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        question_id,title,content,description,type,submit_count,
+        accept_count,tags,difficulty,author,memory,
+        time_limit,test_data_path,output_script,create_time,update_time,
+        is_delete
+    </sql>
+</mapper>

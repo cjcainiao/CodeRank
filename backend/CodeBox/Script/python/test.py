@@ -1,0 +1,4 @@
+list = []
+
+while True:
+    pass
