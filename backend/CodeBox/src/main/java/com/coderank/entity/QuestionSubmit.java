@@ -52,12 +52,12 @@ public class QuestionSubmit {
     /**
      * 总耗时 ms
      */
-    private Integer timeUsed;
+    private Double timeUsed;
 
     /**
      * 总消耗内存 KB
      */
-    private Integer memoryUsed;
+    private Double memoryUsed;
 
     /**
      * 错误信息

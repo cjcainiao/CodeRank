@@ -1,9 +1,12 @@
 package com.coderank.codeBox;
 
+import com.coderank.entity.QuestionSubmit;
 import com.coderank.entity.Task;
 import com.coderank.enums.LanguageEnum;
+import com.coderank.mapper.QuestionSubmitMapper;
 import com.coderank.utils.FileUtils;
 import com.coderank.utils.TimeLogParserUtils;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -12,11 +15,18 @@ import java.io.IOException;
 /**
  * 代码沙箱公共执行流程
  */
+@Component
 public abstract class AbstractCodeBox implements CodeBox {
+
+    private final QuestionSubmitMapper questionSubmitMapper;
 
     public String baseDir = "D:/task";
 
     public String dataDir = "D:/data";
+
+    protected AbstractCodeBox(QuestionSubmitMapper questionSubmitMapper) {
+        this.questionSubmitMapper = questionSubmitMapper;
+    }
 
     /**
      * 通用执行流程
@@ -37,10 +47,10 @@ public abstract class AbstractCodeBox implements CodeBox {
         run(taskPath, task);
 
         //判题
-        judge(taskPath, dataDir + File.separator + task.getQuestionId());
+        judge(taskPath, dataDir + File.separator + task.getQuestionId(), task);
     }
 
-    private void judge(String taskPath, String dataPath) {
+    private void judge(String taskPath, String dataPath, Task task) {
         File resultDir = new File(taskPath, "result");
         if (!resultDir.exists() || !resultDir.isDirectory()) {
             return; // result目录不存在
@@ -50,14 +60,24 @@ public abstract class AbstractCodeBox implements CodeBox {
         if (subDirs == null) return;
 
         int index = 0;
+        double time = 0;
+        double memory = 0;
+        boolean flgt = true;
 
+        // 开始循环判题
         for (File subDir : subDirs) {
             // 1. 读取错误信息
             String errorMsg = FileUtils.readFile(subDir.getAbsolutePath(), "error.txt");
 
+            // 持久化错误信息
             if (errorMsg != null && !errorMsg.trim().isEmpty()) {
-                System.out.println("错误信息为：" + errorMsg);
-                continue; // 出错跳过
+                QuestionSubmit submit = new QuestionSubmit();
+                submit.setId(task.getId());
+                submit.setStatus(5);
+                submit.setErrorMsg(errorMsg);
+                questionSubmitMapper.updateById(submit);
+                flgt = false;
+                break;
             }
 
             // 2. 读取程序输出答案信息
@@ -70,17 +90,30 @@ public abstract class AbstractCodeBox implements CodeBox {
 
             // 4. 判题
             if (!answer.trim().equals(successMsg.trim())) {
-                System.out.println("答案错误");
-            } else {
-                System.out.println("答案正确");
+                QuestionSubmit submit = new QuestionSubmit();
+                submit.setId(task.getId());
+                submit.setStatus(5);
+                questionSubmitMapper.updateById(submit);
+                flgt = false;
+                break;
             }
 
             // 封装返回信息
             double[] doubles = TimeLogParserUtils.parseTimeLog(subDir.getAbsolutePath() + File.separator + "time_log.txt");
-            for (double aDouble : doubles) {
-                System.out.println(aDouble);
-            }
+            time += doubles[0];
+            memory += doubles[1];
 
+        }
+
+        // 答案正确
+        if (flgt) {
+            QuestionSubmit submit = new QuestionSubmit();
+            submit.setId(task.getId());
+            submit.setScore(100);
+            submit.setMemoryUsed(memory);
+            submit.setTimeUsed(time);
+            submit.setStatus(1);
+            questionSubmitMapper.updateById(submit);
         }
 
         // 删除任务目录

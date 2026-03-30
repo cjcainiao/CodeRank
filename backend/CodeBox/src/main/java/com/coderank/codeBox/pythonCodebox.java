@@ -26,7 +26,6 @@ import java.util.UUID;
  * python代码沙箱
  */
 @Component("python")
-@RequiredArgsConstructor
 public class pythonCodebox extends AbstractCodeBox {
 
     private final DockerClient dockerClient;
@@ -35,6 +34,13 @@ public class pythonCodebox extends AbstractCodeBox {
 
     // 镜像
     private String Images = "pythoncodebox:latest";
+
+    public pythonCodebox(DockerClient dockerClient, QuestionMapper questionMapper, QuestionSubmitMapper questionSubmitMapper) {
+        super(questionSubmitMapper);
+        this.dockerClient = dockerClient;
+        this.questionMapper = questionMapper;
+        this.questionSubmitMapper = questionSubmitMapper;
+    }
 
 
     @Override
@@ -79,7 +85,7 @@ public class pythonCodebox extends AbstractCodeBox {
         if (exitCode == 137 || exitCode == 9) {
             QuestionSubmit submit = new QuestionSubmit();
             submit.setId(task.getId());
-            submit.setStatus(4);
+            submit.setStatus(3);
             questionSubmitMapper.updateById(submit);
             throw new RuntimeException("内存溢出");
         }

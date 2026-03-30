@@ -6,3 +6,15 @@ spring:
     name: codeBox
   profiles:
     active: local
+
+
+# mybatis-plus相关配置
+mybatis-plus:
+  mapper-locations: classpath:/mapper/**.xml
+  configuration:
+    map-underscore-to-camel-case: true  # 驼峰转换
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: assign_id # 主键生成策略(雪花算法)
+      update-strategy: not_null # 更新策略

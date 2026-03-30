@@ -50,10 +50,10 @@ create table if not exists question_submit
     user_id     bigint             not null comment '提交用户id',
     language    varchar(32)        not null comment '编程语言',
     code        longtext           not null comment '提交代码',
-    status      tinyint  default 0 comment '判题状态 0-排队中 1-判题中 2-编译错误 3-超时 4-超内存 5-答案错误 6-未知错误 7-答案正确 ',
+    status      tinyint  default 0 comment '判题状态 0-排队中 1-答案正确 2-编译错误 3-超时 4-超内存 5-答案错误 6-未知错误  ',
     score       int      default 0 comment '总得分',
-    time_used   int      default 0 comment '总耗时 ms',
-    memory_used int      default 0 comment '总消耗内存 KB',
+    time_used   float      default 0 comment '总耗时 ms',
+    memory_used float      default 0 comment '总消耗内存 KB',
     error_msg   text comment '错误信息',
     submit_time datetime default current_timestamp comment '提交时间',
     index idx_userId_questionId (user_id, question_id) comment '先通过提交用户查找，在通过提交题目查找'
