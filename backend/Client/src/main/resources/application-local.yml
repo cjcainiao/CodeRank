@@ -17,6 +17,12 @@ spring:
     port: 6379
     password:
 
+  kafka:
+    bootstrap-servers: 192.168.15.128:9092
+    producer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
 
 # jwt配置
 jwt:

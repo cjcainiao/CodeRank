@@ -20,11 +20,6 @@ public class Task {
     private String code;
 
     /**
-     * 用户输入数据
-     */
-    private String input;
-
-    /**
      * 提交语言
      */
     private String language;

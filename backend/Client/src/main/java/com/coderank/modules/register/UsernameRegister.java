@@ -8,6 +8,7 @@ import com.coderank.entity.vo.RegisterVO;
 import com.coderank.enums.ResultCode;
 import com.coderank.exception.BusinessException;
 import com.coderank.mapper.UserMapper;
+import com.coderank.utils.PasswordEncryptUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -39,6 +40,7 @@ public class UsernameRegister implements Register {
         }
         // 保存用户信息
         User user = BeanUtil.copyProperties(registerDTO, User.class);
+        user.setPassword(PasswordEncryptUtils.encrypt(registerDTO.getPassword()));
         int inserted = userMapper.insert(user);
         if (inserted <= 0) {
             throw new BusinessException("未知错误");

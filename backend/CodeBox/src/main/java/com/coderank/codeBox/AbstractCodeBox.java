@@ -6,6 +6,7 @@ import com.coderank.enums.LanguageEnum;
 import com.coderank.mapper.QuestionSubmitMapper;
 import com.coderank.utils.FileUtils;
 import com.coderank.utils.TimeLogParserUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -20,8 +21,10 @@ public abstract class AbstractCodeBox implements CodeBox {
 
     private final QuestionSubmitMapper questionSubmitMapper;
 
+    @Value("${workspace.baseDir}")
     public String baseDir = "D:/task";
 
+    @Value("${workspace.dataDir}")
     public String dataDir = "D:/data";
 
     protected AbstractCodeBox(QuestionSubmitMapper questionSubmitMapper) {
@@ -34,20 +37,26 @@ public abstract class AbstractCodeBox implements CodeBox {
      * @param task
      */
     public void execute(Task task) {
-        // 校验危险命令
-        check(task.getCode());
+        String taskPath = "";
+        try {
+            // 校验危险命令
+            check(task.getCode());
 
-        // 创建任务
-        String taskPath = create_task(task);
+            // 创建任务
+            taskPath = create_task(task);
 
-        // 编译代码
-        compile(taskPath,task);
+            // 编译代码
+            compile(taskPath, task);
 
-        // 运行代码
-        run(taskPath, task);
+            // 运行代码
+            run(taskPath, task);
 
-        //判题
-        judge(taskPath, dataDir + File.separator + task.getQuestionId(), task);
+            //判题
+            judge(taskPath, dataDir + File.separator + task.getQuestionId(), task);
+        } catch (Exception e) {
+            deleteDirectory(new File(taskPath));
+        }
+
     }
 
     private void judge(String taskPath, String dataPath, Task task) {
@@ -172,6 +181,6 @@ public abstract class AbstractCodeBox implements CodeBox {
 
     protected abstract void run(String taskPath, Task task);
 
-    protected abstract void compile(String taskPath,Task task);
+    protected abstract void compile(String taskPath, Task task);
 
 }

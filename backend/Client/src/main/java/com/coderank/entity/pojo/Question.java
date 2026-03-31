@@ -1,7 +1,6 @@
-package com.coderank.entity;
+package com.coderank.entity.pojo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.util.Date;
@@ -74,7 +73,6 @@ public class Question {
      * 时间限制(ms)
      */
     private Integer timeLimit;
-
 
     /**
      * 是否包含测试脚本 0-无、1-有

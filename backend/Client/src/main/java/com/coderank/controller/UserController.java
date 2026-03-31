@@ -2,7 +2,6 @@ package com.coderank.controller;
 
 import com.coderank.entity.dto.LoginDTO;
 import com.coderank.entity.dto.RegisterDTO;
-import com.coderank.entity.vo.LoginVO;
 import com.coderank.entity.vo.RegisterVO;
 import com.coderank.entity.vo.UserInfoVO;
 import com.coderank.service.UserService;

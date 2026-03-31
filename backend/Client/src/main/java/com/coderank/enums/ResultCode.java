@@ -17,8 +17,10 @@ public enum ResultCode {
     USER_NOT_LOGIN(40007,"用户未登录"),
     NO_PERMISSION(40008, "没有权限"),
     TOKEN_IS_EXPIRED(40009, "token已过期"),
-    LOGIN_IS_EXPIRED(40010, "登录已过期");
-
+    LOGIN_IS_EXPIRED(40010, "登录已过期"),
+    QUESTIONTITLE_ISUSE(40011,"题目已存在"),
+    QUESTION_NOT_EXISTS(40012,"题目不存在"),
+    TASK_CREATEFAILURE(40013,"任务创建失败");
 
 
     public Integer getCode() {
