@@ -4,6 +4,7 @@ import com.coderank.enums.ResultCode;
 import com.coderank.exception.BusinessException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ import java.util.Map;
  * jwt工具类
  */
 @Component
+@Data
 public class JwtUtils {
 
     /**

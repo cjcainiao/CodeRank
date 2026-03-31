@@ -1,7 +1,7 @@
 package com.coderank.modules.login;
 
 import com.coderank.entity.dto.LoginDTO;
-import com.coderank.entity.vo.LoginVO;
+import com.coderank.entity.vo.UserInfoVO;
 
 /**
  * 登录接口
@@ -13,6 +13,6 @@ public interface Login {
      * @param loginDTO
      * @return
      */
-    LoginVO doLogin(LoginDTO loginDTO);
+    UserInfoVO doLogin(LoginDTO loginDTO);
 
 }

@@ -64,17 +64,7 @@ public class LoginManager {
     private void init() {
         for (Login login : LoginList) {
             String[] type = applicationContext.getBeanNamesForType(login.getClass());
-            if (type.length > 0) {
-                String beanName = type[0];
-                if (beanName.endsWith("Login")) {
-                    beanName = beanName.substring(0, beanName.length() - "Login".length());
-                    LoginMap.put(beanName, login);
-                }
-            }
+            LoginMap.put(type[0],login);
         }
-
-        LoginMap.forEach((k,v) ->{
-            System.out.println(k);
-        });
     }
 }

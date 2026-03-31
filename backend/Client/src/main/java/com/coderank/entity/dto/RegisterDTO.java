@@ -2,23 +2,21 @@ package com.coderank.entity.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+
 import java.io.Serializable;
 
 /**
- * 登录请求接收
+ * 注册请求
  */
 @Data
-public class LoginDTO implements Serializable {
+public class RegisterDTO implements Serializable {
 
     @JsonIgnore
     private static final long serialVersionUID = 1L;
 
     /**
-     * 登录分类
+     * 注册类型
      */
-    @NotNull(message = "登录分类不能为空")
     private Integer type;
 
     /**
@@ -32,8 +30,7 @@ public class LoginDTO implements Serializable {
     private String password;
 
     /**
-     * 是否记住我（无感刷新）
+     * 确认密码
      */
-    private Boolean rememberMe = false;
-
+    private String confirmPassword;
 }

@@ -1,13 +1,25 @@
+# 本地配置文件
+server:
+  port: 8081
+
 spring:
   datasource:
+  # mysql相关配置
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/CodeBox?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: root
 
+  # Redis相关配置
+  redis:
+    host: localhost
+    database: 0
+    port: 6379
+    password:
+
 
 # jwt配置
 jwt:
   secretKey: 123456245234523452345345345345345345
-  expire: 1
+  expire: 7200
   refresh: 604800
