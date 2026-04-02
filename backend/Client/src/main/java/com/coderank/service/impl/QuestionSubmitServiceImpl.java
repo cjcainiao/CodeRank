@@ -9,6 +9,7 @@ import com.coderank.entity.dto.TaskDTO;
 import com.coderank.entity.pojo.Question;
 import com.coderank.entity.pojo.QuestionSubmit;
 import com.coderank.entity.vo.QuestionSubmitVO;
+import com.coderank.entity.vo.TaskVO;
 import com.coderank.enums.ResultCode;
 import com.coderank.exception.BusinessException;
 import com.coderank.mapper.QuestionMapper;
@@ -59,6 +60,20 @@ public class QuestionSubmitServiceImpl extends ServiceImpl<QuestionSubmitMapper,
         //封装返回结果
         QuestionSubmitVO taskVO = new QuestionSubmitVO();
         taskVO.setId(taskSubmit.getId());
+        return ResponseResult.success(taskVO);
+    }
+
+
+    /**
+     * 查询任务
+     * @param id
+     * @return
+     */
+    public ResponseResult<TaskVO> findTask(Long id) {
+        QuestionSubmit task = this.getById(id);
+
+        TaskVO taskVO = BeanUtil.copyProperties(task, TaskVO.class);
+
         return ResponseResult.success(taskVO);
     }
 }

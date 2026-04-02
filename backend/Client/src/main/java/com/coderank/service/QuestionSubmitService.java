@@ -4,6 +4,7 @@ import com.coderank.entity.dto.TaskDTO;
 import com.coderank.entity.pojo.QuestionSubmit;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.coderank.entity.vo.QuestionSubmitVO;
+import com.coderank.entity.vo.TaskVO;
 import com.coderank.utils.ResponseResult;
 
 /**
@@ -17,4 +18,11 @@ public interface QuestionSubmitService extends IService<QuestionSubmit> {
      * @return
      */
     ResponseResult<QuestionSubmitVO> task(TaskDTO taskDTO);
+
+    /**
+     * 查询任务接口
+     * @param id
+     * @return
+     */
+    ResponseResult<TaskVO> findTask(Long id);
 }

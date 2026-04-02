@@ -1,0 +1,27 @@
+/* 全局样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  background-color: #f8f9fa;
+  color: #333;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 渐变背景选项（可选） */
+/* 如果需要更精美的效果，可以将 background-color 替换为下面的渐变 */
+/* body {
+  background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);
+} */
