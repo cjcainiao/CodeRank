@@ -18,6 +18,7 @@
     </properties>
 
     <dependencies>
+
         <!-- hutool工具包相关依赖 -->
         <dependency>
             <groupId>cn.hutool</groupId>

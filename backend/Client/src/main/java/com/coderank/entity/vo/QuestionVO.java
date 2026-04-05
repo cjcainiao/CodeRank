@@ -1,31 +1,35 @@
-package com.coderank.entity.dto;
+package com.coderank.entity.vo;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.coderank.entity.pojo.codeTemplate;
 import com.coderank.entity.pojo.testCase;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
 import java.util.Date;
 import java.util.List;
 
 /**
- * 题目相关请求类
+ * 题目相关信息
  */
 @Data
-public class QuestionDTO {
+public class QuestionVO {
+    /**
+     * 题目id
+     */
+    private Long questionId;
 
     /**
      * 标题
      */
-    @NotBlank(message = "标题不能为空")
     private String title;
 
     /**
      * 题目内容
      */
-    @NotBlank(message = "内容不能为空")
     private String content;
 
     /**
@@ -88,5 +92,19 @@ public class QuestionDTO {
      */
     private Integer outputScript;
 
-    public interface create{};
+    /**
+     * 创建时间
+     */
+    private Date createTime;
+
+    /**
+     * 更新时间
+     */
+    private Date updateTime;
+
+    /**
+     * 是否删除 0-否 1-是
+     */
+    private Integer isDelete;
+
 }

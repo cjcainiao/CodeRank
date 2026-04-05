@@ -2,10 +2,10 @@ FROM alpine:latest
 
 RUN apk update && \
     apk add bash && \
-    apk add openjdk8
+    apk add python3
 
 WORKDIR /workspace
 
-COPY ./Script.sh .
+COPY Script.sh .
 
 ENTRYPOINT ["bash","Script.sh"]

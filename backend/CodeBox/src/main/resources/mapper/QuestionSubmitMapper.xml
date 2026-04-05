@@ -11,7 +11,6 @@
             <result property="language" column="language" />
             <result property="code" column="code" />
             <result property="status" column="status" />
-            <result property="score" column="score" />
             <result property="timeUsed" column="time_used" />
             <result property="memoryUsed" column="memory_used" />
             <result property="errorMsg" column="error_msg" />
@@ -20,6 +19,6 @@
 
     <sql id="Base_Column_List">
         id,question_id,user_id,language,code,status,
-        score,time_used,memory_used,error_msg,submit_time
+        time_used,memory_used,error_msg,submit_time
     </sql>
 </mapper>

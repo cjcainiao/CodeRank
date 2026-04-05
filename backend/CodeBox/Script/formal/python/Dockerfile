@@ -6,6 +6,6 @@ RUN apk update && \
 
 WORKDIR /workspace
 
-COPY ./Script.sh .
+COPY Script.sh .
 
 ENTRYPOINT ["bash","Script.sh"]

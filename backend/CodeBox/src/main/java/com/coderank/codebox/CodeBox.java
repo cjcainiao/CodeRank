@@ -1,4 +1,4 @@
-package com.coderank.codeBox;
+package com.coderank.codebox;
 
 import com.coderank.entity.Task;
 
@@ -12,4 +12,10 @@ public interface CodeBox {
      * @param task
      */
     void execute(Task task);
+
+    /**
+     * 测试任务
+     * @param task
+     */
+    void test(Task task);
 }

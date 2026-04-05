@@ -5,12 +5,15 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.coderank.entity.dto.QuestionDTO;
 import com.coderank.entity.pojo.Question;
+import com.coderank.entity.vo.QuestionVO;
 import com.coderank.enums.ResultCode;
 import com.coderank.exception.BusinessException;
-import com.coderank.service.QuestionService;
 import com.coderank.mapper.QuestionMapper;
+import com.coderank.service.QuestionService;
 import com.coderank.utils.ResponseResult;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 /**
  * 题目相关业务实现
@@ -40,6 +43,20 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
             throw new BusinessException("创建失败");
         }
         return ResponseResult.success("创建成功");
+    }
+
+    /**
+     * 查询单道题目信息
+     * @param id
+     * @return
+     */
+    public ResponseResult<QuestionVO> queryById(Long id) {
+        Question question = this.getById(id);
+        if(Objects.isNull(question)){
+            throw new BusinessException("题目不存在");
+        }
+        QuestionVO questionVO = BeanUtil.copyProperties(question, QuestionVO.class);
+        return ResponseResult.success(questionVO);
     }
 }
 
