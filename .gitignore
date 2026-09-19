@@ -1,22 +1,79 @@
-# 项目排除文件
-.idea
-.vscode
+# ==================== Java / Maven（后端） ====================
+target/
+build/
+out/
+*.class
+*.jar
+*.war
+*.ear
+.flattened-pom.xml
+dependency-reduced-pom.xml
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+release.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
 
-# client排除文件
-backend/Client/.idea
-backend/Client/.vscode
-backend/Client/target/**
-backend/Client/src/test/**
+# ==================== Node / Vite（前端） ====================
+node_modules/
+dist/
+dist-ssr/
+.vite/
+coverage/
+*.tsbuildinfo
+*.timestamp-*-*.mjs
+.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.local
 
-# Codebox排除文件
-backend/CodeBox/.idea
-backend/CodeBox/.vscode
-backend/CodeBox/target/**
-backend/CodeBox/src/test/**
+# ==================== 测试产物 ====================
+test-results/
+surefire-reports/
+failsafe-reports/
+cypress/videos/
+cypress/screenshots/
+__screenshots__/
 
+# ==================== 日志与临时文件 ====================
+logs/
+logs
+*.log
+*.tmp
+*.pid
+*.sw?
 
-# web排除文件
-Web/CodeRank/.idea
-Web/CodeRank/.vscode
-Web/CodeRank/node_modules/**
-Web/CodeRank/dist/**
+# ==================== IDE ====================
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.iml
+*.ipr
+*.iws
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+.settings/
+.classpath
+.project
+
+# ==================== 系统 ====================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==================== 敏感配置（不进仓库） ====================
+application-secret.yml
+application-private.yml
+application-local-dev.yml
+*.pem
+*.key
+*.p12
+*.jks
+.env
+.env.local
