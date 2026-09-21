@@ -32,6 +32,7 @@ lerna-debug.log*
 *.local
 
 # ==================== 测试产物 ====================
+**/src/test/
 test-results/
 surefire-reports/
 failsafe-reports/
