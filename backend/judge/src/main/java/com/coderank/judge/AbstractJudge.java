@@ -30,7 +30,6 @@ public abstract class AbstractJudge implements Judge {
 
     private static final byte TASK_STATUS_RUNNING = 1;
     private static final byte TASK_STATUS_COMPLETED = 2;
-    private static final byte TASK_STATUS_FAILED = 3;
 
     private static final String OUTPUT_SCRIPT_FILE_NAME = "output_script.py";
     private static final String PYTHON_PATH = "/usr/bin/python3";
@@ -130,15 +129,13 @@ public abstract class AbstractJudge implements Judge {
 
             String scriptContent = context.getQuestion().getOutputScriptContent();
             if (scriptContent == null || scriptContent.isBlank()) {
-                updateTaskStatus(context, TASK_STATUS_FAILED, "题目输出结果脚本为空");
-                return;
+                throw new BusinessException(ErrorCode.BUSINESS_ERROR, "题目输出结果脚本为空");
             }
 
             // 获取刚刚执行完成的测试点输出。
             List<JsonNode> runResultList = context.getRunResultList();
             if (runResultList.isEmpty()) {
-                updateTaskStatus(context, TASK_STATUS_FAILED, "测试点运行结果为空");
-                return;
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "测试点运行结果为空");
             }
             JsonNode lastRunResult = runResultList.get(runResultList.size() - 1);
             String output = lastRunResult.path("files").path("stdout").asText("");
@@ -162,26 +159,22 @@ public abstract class AbstractJudge implements Judge {
 
             JsonNode response = judgeClient.run(Map.of("cmd", List.of(command)));
             if (!response.isArray() || response.isEmpty()) {
-                updateTaskStatus(context, TASK_STATUS_FAILED, "输出结果脚本未返回结果");
-                return;
+                throw new BusinessException(ErrorCode.REMOTE_ERROR, "输出结果脚本未返回结果");
             }
 
             JsonNode scriptResult = response.get(0);
             String status = scriptResult.path("status").asText();
             String error = scriptResult.path("files").path("stderr").asText("");
             if (!"Accepted".equals(status)) {
-                updateTaskStatus(
-                        context,
-                        TASK_STATUS_FAILED,
+                throw new BusinessException(
+                        ErrorCode.BUSINESS_ERROR,
                         "输出结果脚本执行失败：" + (error.isBlank() ? status : error)
                 );
-                return;
             }
 
             JsonNode files = lastRunResult.path("files");
             if (!(files instanceof ObjectNode filesNode)) {
-                updateTaskStatus(context, TASK_STATUS_FAILED, "测试点输出结果格式错误");
-                return;
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "测试点输出结果格式错误");
             }
             // 使用脚本处理后的输出替换当前测试点输出。
             filesNode.put("stdout", scriptResult.path("files").path("stdout").asText(""));
@@ -189,8 +182,8 @@ public abstract class AbstractJudge implements Judge {
             String errorMessage = exception.getMessage() == null
                     ? "输出结果脚本执行失败"
                     : exception.getMessage();
-            updateTaskStatus(context, TASK_STATUS_FAILED, errorMessage);
             log.error("运行输出结果脚本失败，taskId={}", context.getTaskId(), exception);
+            throw exception;
         }
     }
 
@@ -200,8 +193,7 @@ public abstract class AbstractJudge implements Judge {
             List<JsonNode> runResultList = context.getRunResultList();
             List<JudgeContext.JudgeData> judgeDataList = context.getJudgeDataList();
             if (runResultList.size() != judgeDataList.size()) {
-                updateTaskStatus(context, TASK_STATUS_FAILED, "测试点运行结果数量不一致");
-                return;
+                throw new BusinessException(ErrorCode.SYSTEM_ERROR, "测试点运行结果数量不一致");
             }
 
             byte judgeResult = 1;
@@ -213,8 +205,10 @@ public abstract class AbstractJudge implements Judge {
             for (int i = 0; i < runResultList.size(); i++) {
                 JsonNode runResult = runResultList.get(i);
                 if (!(runResult instanceof ObjectNode resultNode)) {
-                    updateTaskStatus(context, TASK_STATUS_FAILED, "第 " + (i + 1) + " 个测试点结果格式错误");
-                    return;
+                    throw new BusinessException(
+                            ErrorCode.SYSTEM_ERROR,
+                            "第 " + (i + 1) + " 个测试点结果格式错误"
+                    );
                 }
 
                 String runStatus = runResult.path("status").asText();
@@ -281,8 +275,11 @@ public abstract class AbstractJudge implements Judge {
             String errorMessage = exception.getMessage() == null
                     ? "评测结果处理失败"
                     : exception.getMessage();
-            updateTaskStatus(context, TASK_STATUS_FAILED, errorMessage);
             log.error("评测结果处理失败，taskId={}", context.getTaskId(), exception);
+            if (exception instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+            throw new IllegalStateException(errorMessage, exception);
         }
     }
 
@@ -338,9 +335,6 @@ public abstract class AbstractJudge implements Judge {
 
                 // 6、运行输出结果脚本
                 runOutputScript(judgeContext);
-                if (Byte.valueOf(TASK_STATUS_FAILED).equals(judgeContext.getTask().getStatus())) {
-                    return;
-                }
             }
 
             // 7、获取结果并判题
@@ -349,8 +343,11 @@ public abstract class AbstractJudge implements Judge {
             String errorMessage = exception.getMessage() == null
                     ? "评测任务执行失败"
                     : exception.getMessage();
-            updateTaskStatus(judgeContext, TASK_STATUS_FAILED, errorMessage);
             log.error("评测任务执行失败，taskId={}", submissionId, exception);
+            if (exception instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+            throw new IllegalStateException(errorMessage, exception);
         } finally {
             // 8、清理任务资源
             cleanup(judgeContext);
@@ -381,8 +378,7 @@ public abstract class AbstractJudge implements Judge {
             // 6、获取输出结果并保存到数据库
             saveTestResult(judgeContext);
         } catch (RuntimeException exception) {
-            // 流程异常时记录失败状态和错误原因。
-            updateTaskStatus(judgeContext, TASK_STATUS_FAILED, exception.getMessage());
+            log.error("测试任务执行失败，taskId={}", submissionId, exception);
             throw exception;
         } finally {
             // 无论运行成功还是失败，都清理任务级临时文件。

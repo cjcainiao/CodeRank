@@ -16,7 +16,7 @@ import java.util.Map;
 /**
  * Python 代码沙箱。
  */
-@Component
+@Component("Python")
 public class PythonSandbox extends AbstractJudge {
 
     /** 语言类型。 */

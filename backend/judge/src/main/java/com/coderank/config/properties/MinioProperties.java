@@ -40,4 +40,10 @@ public class MinioProperties {
 
     /** 写入数据超时时间。 */
     private Duration writeTimeout = Duration.ofSeconds(30);
+
+    /** 文件下载最大尝试次数。 */
+    private int downloadMaxAttempts = 3;
+
+    /** 文件下载失败后的重试间隔。 */
+    private Duration downloadRetryInterval = Duration.ofMillis(500);
 }

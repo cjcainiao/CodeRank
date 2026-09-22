@@ -9,6 +9,27 @@ spring:
     url: ${DB_URL:jdbc:mysql://localhost:3306/coderank?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:root}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: coderank-judge
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.coderank.dto
+        spring.json.value.default.type: com.coderank.dto.SubmissionTaskDTO
+        spring.json.use.type.headers: false
+    listener:
+      ack-mode: record
+
+judge:
+  kafka:
+    task-topic: ${JUDGE_TASK_TOPIC:judge-task}
+    concurrency: ${JUDGE_TASK_CONCURRENCY:4}
+    max-attempts: ${JUDGE_TASK_MAX_ATTEMPTS:3}
+    retry-interval: ${JUDGE_TASK_RETRY_INTERVAL:1s}
 
 minio:
   endpoint: ${MINIO_ENDPOINT:http://154.219.99.249:9000}
@@ -20,3 +41,5 @@ minio:
   connect-timeout: 5s
   read-timeout: 30s
   write-timeout: 30s
+  download-max-attempts: 3
+  download-retry-interval: 500ms

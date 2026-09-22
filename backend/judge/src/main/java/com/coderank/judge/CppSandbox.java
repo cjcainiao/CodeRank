@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * C++ 代码沙箱。
  */
-@Component
+@Component("Cpp")
 public class CppSandbox extends AbstractJudge {
 
     /** 语言类型。 */
