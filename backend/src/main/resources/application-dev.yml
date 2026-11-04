@@ -1,0 +1,41 @@
+# 开发环境配置文件
+
+server:
+  port: 8080  # 端口
+
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver  # 数据库驱动
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:coderank}  # 数据库地址
+    username: ${DB_USERNAME:postgres}  # 数据库用户名
+    password: ${DB_PASSWORD:postgres}  # 数据库密码
+    type: com.zaxxer.hikari.HikariDataSource  # 连接池类型
+    hikari:
+      pool-name: CodeRankHikariPool  # 连接池名称
+      minimum-idle: 5                # 最小空闲连接数
+      maximum-pool-size: 20          # 最大连接数
+      connection-timeout: 30000      # 获取连接超时（ms）
+      validation-timeout: 5000       # 连接有效性校验超时（ms）
+      idle-timeout: 600000           # 空闲连接回收时间（ms）
+      max-lifetime: 1800000          # 连接最大存活时间（ms）
+      keepalive-time: 60000          # 连接保活探测间隔（ms）
+      auto-commit: true              # 自动提交事务
+      data-source-properties:
+        reWriteBatchedInserts: true  # 批量插入改写为多行values
+        tcpKeepAlive: true           # TCP保活
+        connectTimeout: 10           # 建立连接超时（秒）
+        socketTimeout: 60            # 读操作超时（秒）
+
+# mybatis-plus配置
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml  # 映射文件位置
+  type-aliases-package: com.coderank.entity.pojo  # 实体包路径
+  global-config:
+    banner: false  # 关闭启动banner
+    db-config:
+      id-type: auto          # 主键策略
+      table-underline: true  # 表名驼峰转下划线
+  configuration:
+    map-underscore-to-camel-case: true                     # 下划线转驼峰
+    cache-enabled: false                                   # 关闭二级缓存
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 打印SQL日志

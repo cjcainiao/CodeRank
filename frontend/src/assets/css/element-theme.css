@@ -1,0 +1,302 @@
+/* Element Plus 主题变量桥接 */
+
+/* 后台调色板定义在根节点，使挂到 body 的下拉、气泡也能取到变量 */
+:root {
+  --backend-surface: #fff;
+  --backend-sidebar-surface: #fff;
+  --backend-border: #e8e9eb;
+  --backend-text: #252733;
+  --backend-muted: #777b88;
+  --backend-active: #ececec;
+  --backend-active-text: #252733;
+  --backend-close: #585858;
+  --backend-close-hover: #383838;
+}
+
+/* 暗色模式由 LayoutView 同步到 html 上的 backend-dark 类 */
+:root.backend-dark {
+  --backend-surface: #1c1c1f;
+  --backend-sidebar-surface: #242428;
+  --backend-border: #38383d;
+  --backend-text: #f2f2f4;
+  --backend-muted: #b7b7c0;
+  --backend-active: #38383e;
+  --backend-active-text: #f7f7f8;
+  --backend-close: #8a8a92;
+  --backend-close-hover: #a4a4ac;
+}
+
+/* 把 Element Plus 的 --el-* 变量映射到后台主题的 --backend-* 变量，
+   使表格、表单、分页等组件跟随明暗模式。 */
+:root,
+.backend-shell {
+  --el-bg-color: var(--backend-surface);
+  --el-bg-color-page: var(--backend-surface);
+  --el-bg-color-overlay: var(--backend-sidebar-surface);
+
+  --el-text-color-primary: var(--backend-text);
+  --el-text-color-regular: var(--backend-text);
+  --el-text-color-secondary: var(--backend-muted);
+  --el-text-color-placeholder: var(--backend-muted);
+  --el-text-color-disabled: var(--backend-muted);
+
+  --el-border-color: var(--backend-border);
+  --el-border-color-light: var(--backend-border);
+  --el-border-color-lighter: var(--backend-border);
+  --el-border-color-extra-light: var(--backend-border);
+  --el-border-color-dark: var(--backend-border);
+  --el-border-color-darker: var(--backend-border);
+  --el-border-color-hover: var(--backend-muted);
+
+  --el-fill-color: var(--backend-active);
+  --el-fill-color-light: var(--backend-active);
+  --el-fill-color-lighter: var(--backend-active);
+  --el-fill-color-extra-light: var(--backend-active);
+  --el-fill-color-dark: var(--backend-active);
+  --el-fill-color-darker: var(--backend-active);
+  --el-fill-color-blank: var(--backend-surface);
+
+  --el-disabled-bg-color: var(--backend-active);
+  --el-disabled-text-color: var(--backend-muted);
+  --el-disabled-border-color: var(--backend-border);
+
+  --el-mask-color: color-mix(in srgb, var(--backend-surface) 90%, transparent);
+  --el-overlay-color-lighter: color-mix(in srgb, var(--backend-text) 50%, transparent);
+
+  --el-color-primary: var(--backend-text);
+  --el-color-primary-light-3: color-mix(in srgb, var(--backend-text) 70%, var(--backend-surface));
+  --el-color-primary-light-5: color-mix(in srgb, var(--backend-text) 50%, var(--backend-surface));
+  --el-color-primary-light-7: color-mix(in srgb, var(--backend-text) 30%, var(--backend-surface));
+  --el-color-primary-light-8: color-mix(in srgb, var(--backend-text) 20%, var(--backend-surface));
+  --el-color-primary-light-9: color-mix(in srgb, var(--backend-text) 10%, var(--backend-surface));
+  --el-color-primary-dark-2: color-mix(in srgb, var(--backend-text) 82%, #000);
+}
+
+/* 按钮：主按钮黑底白字，次按钮描边，整体走黑白灰单色 */
+.backend-shell .el-button {
+  --el-button-hover-text-color: var(--backend-text);
+  --el-button-hover-bg-color: var(--backend-active);
+  --el-button-hover-border-color: var(--backend-text);
+  --el-button-active-text-color: var(--backend-text);
+  --el-button-active-bg-color: var(--backend-active);
+  --el-button-active-border-color: var(--backend-text);
+}
+
+.backend-shell .el-button--primary:not(.is-link) {
+  --el-button-text-color: var(--backend-surface);
+  --el-button-bg-color: var(--backend-text);
+  --el-button-border-color: var(--backend-text);
+  --el-button-hover-text-color: var(--backend-surface);
+  --el-button-hover-bg-color: color-mix(in srgb, var(--backend-text) 82%, var(--backend-surface));
+  --el-button-hover-border-color: color-mix(
+    in srgb,
+    var(--backend-text) 82%,
+    var(--backend-surface)
+  );
+  --el-button-active-text-color: var(--backend-surface);
+  --el-button-active-bg-color: var(--backend-text);
+  --el-button-active-border-color: var(--backend-text);
+  --el-button-disabled-text-color: var(--backend-muted);
+  --el-button-disabled-bg-color: var(--backend-active);
+  --el-button-disabled-border-color: var(--backend-border);
+}
+
+/* 文字按钮：悬停加下划线，颜色跟随主题 */
+.backend-shell .el-button.is-link.el-button--primary {
+  --el-button-text-color: var(--backend-text);
+  --el-button-hover-link-text-color: var(--backend-text);
+  --el-button-active-color: var(--backend-text);
+}
+
+.backend-shell .el-button.is-link.el-button--primary:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.backend-shell .el-button.is-link.el-button--danger {
+  --el-button-text-color: var(--el-color-danger);
+}
+
+.backend-shell .el-button:focus-visible {
+  outline: 2px solid var(--backend-text);
+  outline-offset: 2px;
+}
+
+/* 表头排序图标：适度放大三角并保持淡色 */
+.backend-shell .el-table .caret-wrapper {
+  width: 18px;
+  height: 14px;
+}
+
+.backend-shell .el-table .sort-caret {
+  left: 4px;
+  border-width: 4px;
+}
+
+.backend-shell .el-table .sort-caret.ascending {
+  top: -3px;
+  border-bottom-color: color-mix(in srgb, var(--backend-muted) 60%, transparent);
+}
+
+.backend-shell .el-table .sort-caret.descending {
+  bottom: -2px;
+  border-top-color: color-mix(in srgb, var(--backend-muted) 60%, transparent);
+}
+
+.backend-shell .el-table .ascending .sort-caret.ascending {
+  border-bottom-color: color-mix(in srgb, var(--backend-text) 80%, transparent);
+}
+
+.backend-shell .el-table .descending .sort-caret.descending {
+  border-top-color: color-mix(in srgb, var(--backend-text) 80%, transparent);
+}
+
+/* 表格：表头与斑马纹使用主题色，去掉默认的浅灰底 */
+.backend-shell .el-table {
+  --el-table-bg-color: var(--backend-surface);
+  --el-table-tr-bg-color: var(--backend-surface);
+  --el-table-header-bg-color: var(--backend-active);
+  --el-table-header-text-color: var(--backend-text);
+  --el-table-text-color: var(--backend-text);
+  --el-table-border-color: var(--backend-border);
+  --el-table-row-hover-bg-color: var(--backend-active);
+  --el-table-expanded-cell-bg-color: var(--backend-surface);
+}
+
+/* 分页：页码按钮带背景，当前页高亮 */
+.backend-shell .el-pagination {
+  --el-pagination-bg-color: transparent;
+  --el-pagination-text-color: var(--backend-muted);
+  --el-pagination-button-color: var(--backend-text);
+  --el-pagination-button-bg-color: var(--backend-surface);
+  --el-pagination-button-disabled-color: var(--backend-muted);
+  --el-pagination-hover-color: var(--backend-active-text);
+}
+
+/* 页码数字：统一背景与圆角 */
+.backend-shell .el-pagination .el-pager li {
+  min-width: 30px;
+  height: 30px;
+  margin: 0 2px;
+  border-radius: 6px;
+  background-color: var(--backend-active);
+  color: var(--backend-text);
+  font-weight: 500;
+  line-height: 30px;
+}
+
+.backend-shell .el-pagination .el-pager li:hover {
+  background-color: color-mix(in srgb, var(--backend-active) 70%, var(--backend-text));
+  color: var(--backend-text);
+}
+
+/* 当前页：反色突出 */
+.backend-shell .el-pagination .el-pager li.is-active {
+  background-color: var(--backend-text);
+  color: var(--backend-surface);
+  font-weight: 600;
+}
+
+/* 上一页/下一页按钮同样带背景 */
+.backend-shell .el-pagination button {
+  min-width: 30px;
+  height: 30px;
+  margin: 0 2px;
+  border-radius: 6px;
+  background-color: var(--backend-active);
+  color: var(--backend-text);
+}
+
+.backend-shell .el-pagination button:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--backend-active) 70%, var(--backend-text));
+  color: var(--backend-text);
+}
+
+.backend-shell .el-pagination button:disabled {
+  background-color: transparent;
+  color: var(--backend-muted);
+  opacity: 0.5;
+}
+
+/* 输入框与下拉框：底色与边框跟随主题 */
+.backend-shell .el-input__wrapper,
+.backend-shell .el-textarea__inner,
+.backend-shell .el-select__wrapper {
+  background-color: var(--backend-surface);
+  box-shadow: 0 0 0 1px var(--backend-border) inset;
+}
+
+.backend-shell .el-input__wrapper:hover,
+.backend-shell .el-select__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--backend-muted) inset;
+}
+
+/* 弹窗与气泡：底色与边框跟随主题 */
+.backend-shell .el-dialog,
+.backend-shell .el-popper.is-light,
+.backend-shell .el-popover {
+  background-color: var(--backend-sidebar-surface);
+  border-color: var(--backend-border);
+  color: var(--backend-text);
+}
+
+.backend-shell .el-dialog__title,
+.backend-shell .el-dialog__body {
+  color: var(--backend-text);
+}
+
+/* 表单项标签跟随主题 */
+.backend-shell .el-form-item__label {
+  color: var(--backend-text);
+}
+
+/* 表单项标签后补全角冒号，与中文标签习惯一致 */
+.backend-shell .el-form-item__label::after {
+  content: '：';
+}
+
+/* 空状态：文字与配图跟随主题 */
+.backend-shell .el-empty {
+  --el-empty-fill-color-0: var(--backend-surface);
+  --el-empty-fill-color-1: var(--backend-active);
+  --el-empty-fill-color-2: var(--backend-active);
+  --el-empty-fill-color-3: var(--backend-active);
+  --el-empty-fill-color-4: var(--backend-active);
+  --el-empty-fill-color-5: var(--backend-active);
+  --el-empty-fill-color-6: var(--backend-active);
+  --el-empty-fill-color-7: var(--backend-active);
+  --el-empty-fill-color-8: var(--backend-active);
+  --el-empty-fill-color-9: var(--backend-active);
+}
+
+.backend-shell .el-empty__description p {
+  color: var(--backend-muted);
+}
+
+/* 传送门浮层：下拉、选择器面板、气泡挂到 body，需单独指定配色 */
+.el-select__popper,
+.el-picker__popper,
+.el-dropdown__popper,
+.el-popper.is-light {
+  background-color: var(--backend-sidebar-surface) !important;
+  border-color: var(--backend-border) !important;
+  color: var(--backend-text) !important;
+}
+
+.el-select-dropdown__item {
+  color: var(--backend-text);
+}
+
+.el-select-dropdown__item.is-hovering {
+  background-color: var(--backend-active);
+}
+
+.el-select-dropdown__item.is-selected {
+  color: var(--backend-text);
+  font-weight: 600;
+}
+
+.el-popper__arrow::before {
+  background-color: var(--backend-sidebar-surface) !important;
+  border-color: var(--backend-border) !important;
+}
