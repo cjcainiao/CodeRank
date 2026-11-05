@@ -32,3 +32,14 @@ file:
     test-data:                        # 题目评测数据
       dir: testdata                   # 子目录
       allowed-extensions: in,out      # 允许的扩展名
+
+# HTTP 客户端配置
+http-client:
+  judge:                         # 评测机专用：耗时较长，不重试
+    max-total: 20                # 全局最大连接数
+    max-per-route: 10            # 单台评测机最大连接数，与调度并发上限呼应
+    connect-timeout: 5s          # 建立连接超时
+    response-timeout: 60s        # 等待响应超时，覆盖多测试点判题耗时
+    idle-evict: 5m               # 空闲连接回收时间
+    keep-alive: 10m              # 连接保活时间
+    validate-after-inactivity: 1s  # 空闲超过该时长后使用前校验

@@ -23,14 +23,6 @@ const homeRoutes: RouteRecordRaw[] = [
         },
       },
       {
-        path: 'questions/:id',
-        name: 'home-question-detail',
-        component: () => import('@/views/home/pages/questions/QuestionDetailView.vue'),
-        meta: {
-          title: '题目详情',
-        },
-      },
-      {
         path: 'contests',
         name: 'home-contests',
         component: () => import('@/views/home/pages/contests/ContestListView.vue'),

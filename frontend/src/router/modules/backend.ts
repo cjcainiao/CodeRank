@@ -67,6 +67,16 @@ const backendRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'judge/machines',
+        name: 'backend-judge-machines',
+        component: () => import('@/views/backend/pages/judge/JudgeMachineView.vue'),
+        meta: {
+          backendTitle: '评测机管理',
+          requiresAuth: true,
+          roles: ['admin'],
+        },
+      },
+      {
         path: 'judge/status',
         name: 'backend-judge-status',
         component: () => import('@/views/backend/pages/judge/JudgeStatusView.vue'),

@@ -2,11 +2,13 @@ package com.coderank.controller.home;
 
 import com.coderank.common.result.PageResult;
 import com.coderank.common.result.Result;
-import com.coderank.entity.dto.QuestionBankQueryDTO;
-import com.coderank.entity.vo.QuestionBankItemVO;
-import com.coderank.entity.vo.TagOptionVO;
+import com.coderank.entity.dto.question.QuestionBankQueryDTO;
+import com.coderank.entity.vo.question.QuestionBankItemVO;
+import com.coderank.entity.vo.question.QuestionDetailVO;
+import com.coderank.entity.vo.question.TagOptionVO;
 import com.coderank.service.home.QuestionBankService;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -35,5 +37,11 @@ public class QuestionBankController {
     @GetMapping("/tags")
     public Result<List<TagOptionVO>> listTagOptions() {
         return Result.success(questionBankService.listTagOptions());
+    }
+
+    // 按 id 查询已发布的题目详情
+    @GetMapping("/{id}")
+    public Result<QuestionDetailVO> getQuestionDetail(@PathVariable Long id) {
+        return Result.success(questionBankService.getQuestionDetail(id));
     }
 }

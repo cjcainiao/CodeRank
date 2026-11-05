@@ -49,11 +49,18 @@ backend/
     │   │   └── utils/                 # 通用工具类
     │   ├── controller/
     │   │   ├── backend/               # 后台管理接口
+    │   │   │   └── question/          # 后台题目相关接口
     │   │   └── home/                  # 首页用户端接口
     │   ├── entity/
     │   │   ├── dto/                   # 请求数据传输对象
+    │   │   │   ├── question/          # 题目、标签相关
+    │   │   │   ├── judge/             # 评测机相关
+    │   │   │   └── user/              # 用户相关
     │   │   ├── pojo/                  # 数据库实体
     │   │   └── vo/                    # 响应视图对象
+    │   │       ├── question/          # 题目、标签相关
+    │   │       ├── judge/             # 评测机相关
+    │   │       └── user/              # 用户相关
     │   ├── exception/                 # 业务异常与全局异常处理
     │   ├── handler/                   # MyBatis 类型处理器
     │   ├── mapper/
@@ -75,10 +82,11 @@ backend/
 
 新增包须与本结构保持一致，不随意平铺在 `com.coderank` 根下。
 
-### 按端分组
+### 分组规则
 
 - `controller`、`mapper`、`service` 按调用端分组：后台管理放 `backend/` 子包，用户端放 `home/` 子包，接口路径前缀同名（`/backend/questions`、`/home/questions`）。
-- `entity` 下的 `pojo`、`dto`、`vo` **不按端分组**，保持扁平。`pojo` 与表一一对应不随端变化；`dto`、`vo` 在两端字段差异大时用类名区分（`AdminUserVO`、`UserProfileVO`），不加目录层级。
+- `entity` 下的 `dto`、`vo` 按**业务域**分组：`question/`、`judge/`、`user/`，与 `controller/backend/` 的业务子包对应，便于按功能定位文件。
+- `pojo` 不分组，与表一一对应，保持扁平。
 - 包名与接口路径前缀须一致，便于按 URL 反查代码。
 
 

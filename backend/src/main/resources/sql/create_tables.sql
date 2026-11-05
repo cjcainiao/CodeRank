@@ -137,3 +137,31 @@ create table if not exists question_test_data
 
 -- 同一道题内测试点编号唯一，同时支撑按题目查全部测试点
 create unique index if not exists uk_question_test_data on question_test_data (question_id, case_no);
+
+-- 评测机表
+create table if not exists judge_machine
+(
+    id              bigint primary key,                                   -- 主键，雪花算法生成
+    name            varchar(100)           not null,                      -- 机器名称
+    endpoint        varchar(255)           not null,                      -- 服务地址，如 http://127.0.0.1:5050
+    auth_token      varchar(255),                                         -- 认证令牌，未启用认证时为空
+    status          smallint     default 1 not null,                      -- 状态：0 停用，1 启用
+    weight          integer      default 1 not null,                      -- 调度权重，越大分到的任务越多
+    max_parallel    integer      default 4 not null,                      -- 最大并发任务数
+    cpu_limit       bigint       default 5000000000 not null,             -- CPU 时间上限，纳秒
+    clock_limit     bigint       default 10000000000 not null,            -- 墙钟时间上限，纳秒
+    memory_limit    bigint       default 268435456 not null,              -- 内存上限，字节
+    proc_limit      integer      default 64 not null,                     -- 进程数上限
+    output_limit    bigint       default 1048576 not null,                -- 输出上限，字节
+    last_check_time timestamp,                                            -- 最后探测时间
+    last_check_ok   smallint     default 0 not null,                      -- 最后探测结果：0 失败，1 成功
+    remark          varchar(255),                                         -- 备注
+    create_time     timestamp    default current_timestamp not null,      -- 创建时间
+    update_time     timestamp    default current_timestamp not null       -- 更新时间
+);
+
+-- 机器名称唯一，避免重复登记
+create unique index if not exists uk_judge_machine_name on judge_machine (name);
+
+-- 按状态筛选可用机器
+create index if not exists idx_judge_machine_status on judge_machine (status);

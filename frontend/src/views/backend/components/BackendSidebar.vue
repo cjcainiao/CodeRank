@@ -79,6 +79,9 @@
             <Cpu class="backend-sidebar__group-icon" aria-hidden="true" />评测机
             <ChevronDown class="backend-sidebar__expand-icon" aria-hidden="true" />
           </template>
+          <el-menu-item index="/backend/judge/machines">
+            <Server class="backend-sidebar__item-icon" aria-hidden="true" />机器管理
+          </el-menu-item>
           <el-menu-item index="/backend/judge/status">
             <Activity class="backend-sidebar__item-icon" aria-hidden="true" />运行状态
           </el-menu-item>
@@ -127,6 +130,7 @@ import {
   List,
   PanelLeftClose,
   PenLine,
+  Server,
   Settings,
   Settings2,
   Tags,
@@ -148,6 +152,7 @@ const activeMenuPath = computed(() => {
     return '/backend/questions'
   if (route.name === 'backend-question-new') return '/backend/questions/new'
   if (route.name === 'backend-tags') return '/backend/tags'
+  if (route.name === 'backend-judge-machines') return '/backend/judge/machines'
   if (route.name === 'backend-judge-status') return '/backend/judge/status'
   if (route.name === 'backend-submissions') return '/backend/submissions'
   if (route.name === 'backend-users') return '/backend/users'
@@ -166,7 +171,7 @@ const initialOpenGroups = (() => {
   )
     return ['questions']
   if (name === 'backend-submissions') return ['submissions']
-  if (name === 'backend-judge-status') return ['judge']
+  if (name === 'backend-judge-machines' || name === 'backend-judge-status') return ['judge']
   if (name === 'backend-users') return ['users']
   if (name === 'backend-settings') return ['system-settings']
   return []
@@ -202,7 +207,7 @@ watch(
     if (name === 'backend-submissions') {
       groupMenu.value?.open('submissions')
     }
-    if (name === 'backend-judge-status') {
+    if (name === 'backend-judge-machines' || name === 'backend-judge-status') {
       groupMenu.value?.open('judge')
     }
     if (name === 'backend-users') {

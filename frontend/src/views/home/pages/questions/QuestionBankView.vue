@@ -47,7 +47,7 @@
           v-for="(item, index) in rows"
           :key="item.id"
           class="question-item"
-          :to="{ name: 'home-question-detail', params: { id: item.id } }"
+          :to="{ name: 'problem-solve', params: { id: item.id } }"
         >
           <span class="question-item__index">{{ rowNumber(index) }}.</span>
           <span class="question-item__title">{{ item.title }}</span>

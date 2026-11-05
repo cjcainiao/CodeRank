@@ -1,22 +1,26 @@
 package com.coderank.service.home.impl;
-
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.coderank.common.result.PageResult;
-import com.coderank.entity.dto.QuestionBankQueryDTO;
+import com.coderank.entity.dto.question.QuestionBankQueryDTO;
 import com.coderank.entity.pojo.Question;
+import com.coderank.entity.pojo.QuestionCodeTemplate;
 import com.coderank.entity.pojo.QuestionTag;
 import com.coderank.entity.pojo.Tag;
-import com.coderank.entity.vo.QuestionBankItemVO;
-import com.coderank.entity.vo.TagOptionVO;
-import com.coderank.mapper.backend.QuestionMapper;
-import com.coderank.mapper.backend.QuestionTagMapper;
-import com.coderank.mapper.backend.TagMapper;
+import com.coderank.entity.vo.question.QuestionBankItemVO;
+import com.coderank.entity.vo.question.QuestionDetailVO;
+import com.coderank.entity.vo.question.TagOptionVO;
+import com.coderank.exception.BusinessException;
+import com.coderank.mapper.backend.question.QuestionCodeTemplateMapper;
+import com.coderank.mapper.backend.question.QuestionMapper;
+import com.coderank.mapper.backend.question.QuestionTagMapper;
+import com.coderank.mapper.backend.question.TagMapper;
+
+
 import com.coderank.service.home.QuestionBankService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -49,12 +53,16 @@ public class QuestionBankServiceImpl implements QuestionBankService {
 
     private final TagMapper tagMapper;
 
+    private final QuestionCodeTemplateMapper codeTemplateMapper;
+
     public QuestionBankServiceImpl(QuestionMapper questionMapper,
                                    QuestionTagMapper questionTagMapper,
-                                   TagMapper tagMapper) {
+                                   TagMapper tagMapper,
+                                   QuestionCodeTemplateMapper codeTemplateMapper) {
         this.questionMapper = questionMapper;
         this.questionTagMapper = questionTagMapper;
         this.tagMapper = tagMapper;
+        this.codeTemplateMapper = codeTemplateMapper;
     }
 
     // 分页查询已发布的题目
@@ -99,6 +107,46 @@ public class QuestionBankServiceImpl implements QuestionBankService {
             case SORT_FIELD_ACCEPTED_COUNT -> wrapper.orderBy(true, ascending, Question::getAcceptedCount);
             default -> wrapper.orderBy(true, ascending, Question::getId);
         }
+    }
+
+    // 按 id 查询已发布的题目详情
+    @Override
+    public QuestionDetailVO getQuestionDetail(Long id) {
+        Question question = questionMapper.selectById(id);
+        // 草稿与下架题不对用户开放
+        if (question == null || question.getStatus() == null || question.getStatus() != STATUS_PUBLISHED) {
+            throw new BusinessException(404, "题目不存在");
+        }
+
+        QuestionDetailVO vo = new QuestionDetailVO();
+        BeanUtils.copyProperties(question, vo);
+        vo.setTags(listTagNames(id));
+
+        List<QuestionCodeTemplate> templates = codeTemplateMapper.selectList(
+                new LambdaQueryWrapper<QuestionCodeTemplate>()
+                        .eq(QuestionCodeTemplate::getQuestionId, id)
+                        .orderByAsc(QuestionCodeTemplate::getLanguage));
+        vo.setCodeTemplates(templates.stream().map(template -> {
+            QuestionDetailVO.CodeTemplate item = new QuestionDetailVO.CodeTemplate();
+            item.setLanguage(template.getLanguage());
+            item.setTemplate(template.getTemplate());
+            return item;
+        }).toList());
+
+        return vo;
+    }
+
+    // 查询题目挂载的标签名
+    private List<String> listTagNames(Long questionId) {
+        List<QuestionTag> relations = questionTagMapper.selectList(
+                new LambdaQueryWrapper<QuestionTag>().eq(QuestionTag::getQuestionId, questionId));
+        if (relations.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return tagMapper.selectBatchIds(relations.stream().map(QuestionTag::getTagId).distinct().toList())
+                .stream()
+                .map(Tag::getName)
+                .toList();
     }
 
     // 查询可筛选的标签，按排序值升序
