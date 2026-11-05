@@ -90,7 +90,14 @@ provide('backendSiteTitle', siteTitle)
   min-height: 0;
   padding: 30px;
   overflow-y: auto;
+  /* 隐藏内容区滚动条，保留滚轮与触控滚动，与全局样式保持一致。 */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   background: var(--backend-surface);
+}
+
+.backend-main::-webkit-scrollbar {
+  display: none;
 }
 
 .backend-shell--collapsed {

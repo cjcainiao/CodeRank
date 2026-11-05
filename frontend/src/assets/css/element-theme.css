@@ -163,6 +163,30 @@
   --el-table-expanded-cell-bg-color: var(--backend-surface);
 }
 
+/* 表格行高统一收窄：单元格单行展示，内边距与行内标签一起压紧 */
+.backend-shell .el-table .el-table__cell {
+  padding: 9px 0;
+}
+
+.backend-shell .el-table .el-table__cell .cell {
+  padding: 0 12px;
+  white-space: nowrap;
+  word-break: keep-all;
+  line-height: 22px;
+}
+
+.backend-shell .el-table .el-tag {
+  height: 22px;
+  padding: 0 8px;
+  line-height: 20px;
+}
+
+.backend-shell .el-table .el-button.is-link {
+  height: auto;
+  padding: 0;
+  line-height: 22px;
+}
+
 /* 分页：页码按钮带背景，当前页高亮 */
 .backend-shell .el-pagination {
   --el-pagination-bg-color: transparent;

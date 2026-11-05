@@ -2,7 +2,8 @@
 import type { RouteRecordRaw } from 'vue-router'
 
 import backendRoutes from './modules/backend'
+import homeRoutes from './modules/home'
 
-const routes: RouteRecordRaw[] = [...backendRoutes]
+const routes: RouteRecordRaw[] = [...homeRoutes, ...backendRoutes]
 
 export default routes

@@ -1,6 +1,5 @@
 # ==================== 后端（Java / Maven） ====================
 target/
-build/
 out/
 *.class
 *.jar
@@ -13,6 +12,12 @@ pom.xml.releaseBackup
 pom.xml.versionsBackup
 release.properties
 dependency-reduced-pom.xml
+
+# ==================== 构建产物与本地依赖 ====================
+# build 目录整体忽略，但保留部署编排文件与评测机目录
+build/*
+!build/docker-compose.yaml
+!build/judge/
 
 # ==================== 前端（Node / Vite） ====================
 node_modules/
@@ -34,6 +39,9 @@ lerna-debug.log*
 /cypress/videos/
 /cypress/screenshots/
 __screenshots__/
+
+# ==================== 上传文件（含评测数据） ====================
+data/
 
 # ==================== 环境变量（含密钥，不入库） ====================
 .env

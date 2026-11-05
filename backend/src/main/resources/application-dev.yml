@@ -1,7 +1,7 @@
 # 开发环境配置文件
 
 server:
-  port: 8080  # 端口
+  port: 8081  # 端口
 
 spring:
   datasource:
@@ -31,11 +31,17 @@ mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml  # 映射文件位置
   type-aliases-package: com.coderank.entity.pojo  # 实体包路径
   global-config:
-    banner: false  # 关闭启动banner
+    banner: false           # 关闭启动banner
     db-config:
-      id-type: auto          # 主键策略
-      table-underline: true  # 表名驼峰转下划线
+      id-type: auto         # 主键策略
+      table-underline: true # 表名驼峰转下划线
   configuration:
     map-underscore-to-camel-case: true                     # 下划线转驼峰
     cache-enabled: false                                   # 关闭二级缓存
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 打印SQL日志
+
+# 文件上传配置
+file:
+  upload:
+    root: ./data # 上传根目录，开发环境放项目内便于查看
+

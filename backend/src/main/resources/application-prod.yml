@@ -1,4 +1,10 @@
 # 生产环境配置文件
 
 server:
-  port: 8080  # 端口
+  port: 8081  # 端口
+
+# 文件上传配置
+file:
+  upload:
+    root: ${FILE_UPLOAD_ROOT:/var/coderank/data}  # 上传根目录
+

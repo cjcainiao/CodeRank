@@ -61,6 +61,9 @@
           <el-menu-item index="/backend/questions/new">
             <PenLine class="backend-sidebar__item-icon" aria-hidden="true" />新建题目
           </el-menu-item>
+          <el-menu-item index="/backend/tags">
+            <Tags class="backend-sidebar__item-icon" aria-hidden="true" />标签管理
+          </el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="submissions">
           <template #title>
@@ -69,6 +72,15 @@
           </template>
           <el-menu-item index="/backend/submissions">
             <List class="backend-sidebar__item-icon" aria-hidden="true" />提交列表
+          </el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="judge">
+          <template #title>
+            <Cpu class="backend-sidebar__group-icon" aria-hidden="true" />评测机
+            <ChevronDown class="backend-sidebar__expand-icon" aria-hidden="true" />
+          </template>
+          <el-menu-item index="/backend/judge/status">
+            <Activity class="backend-sidebar__item-icon" aria-hidden="true" />运行状态
           </el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="users">
@@ -106,7 +118,9 @@
 import { computed, onMounted, onUnmounted, ref, watch, type Ref, inject } from 'vue'
 import type { MenuInstance } from 'element-plus'
 import {
+  Activity,
   ChevronDown,
+  Cpu,
   FileText,
   History,
   LayoutDashboard,
@@ -115,6 +129,7 @@ import {
   PenLine,
   Settings,
   Settings2,
+  Tags,
   UserCog,
   UsersRound,
 } from '@lucide/vue'
@@ -132,6 +147,8 @@ const activeMenuPath = computed(() => {
   if (route.name === 'backend-questions' || route.name === 'backend-question-edit')
     return '/backend/questions'
   if (route.name === 'backend-question-new') return '/backend/questions/new'
+  if (route.name === 'backend-tags') return '/backend/tags'
+  if (route.name === 'backend-judge-status') return '/backend/judge/status'
   if (route.name === 'backend-submissions') return '/backend/submissions'
   if (route.name === 'backend-users') return '/backend/users'
   if (route.name === 'backend-settings') return '/backend/settings'
@@ -144,10 +161,12 @@ const initialOpenGroups = (() => {
   if (
     name === 'backend-questions' ||
     name === 'backend-question-new' ||
-    name === 'backend-question-edit'
+    name === 'backend-question-edit' ||
+    name === 'backend-tags'
   )
     return ['questions']
   if (name === 'backend-submissions') return ['submissions']
+  if (name === 'backend-judge-status') return ['judge']
   if (name === 'backend-users') return ['users']
   if (name === 'backend-settings') return ['system-settings']
   return []
@@ -157,6 +176,7 @@ const initialOpenGroups = (() => {
 function selectWorkbench() {
   groupMenu.value?.close('questions')
   groupMenu.value?.close('submissions')
+  groupMenu.value?.close('judge')
   groupMenu.value?.close('users')
   groupMenu.value?.close('system-settings')
   closeMobileSidebar()
@@ -174,12 +194,16 @@ watch(
     if (
       name === 'backend-questions' ||
       name === 'backend-question-new' ||
-      name === 'backend-question-edit'
+      name === 'backend-question-edit' ||
+      name === 'backend-tags'
     ) {
       groupMenu.value?.open('questions')
     }
     if (name === 'backend-submissions') {
       groupMenu.value?.open('submissions')
+    }
+    if (name === 'backend-judge-status') {
+      groupMenu.value?.open('judge')
     }
     if (name === 'backend-users') {
       groupMenu.value?.open('users')
