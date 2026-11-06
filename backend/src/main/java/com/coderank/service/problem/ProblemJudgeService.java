@@ -414,7 +414,8 @@ public class ProblemJudgeService {
                     .memory(memoryKb)
                     .passed(false)
                     .status(status)
-                    .message(StringUtils.hasText(stderr) ? stderr : status)
+                    // 只在有真实报错时写入 message，状态名已在 status 里，重复写入会让前端展示两遍
+                    .message(StringUtils.hasText(stderr) ? stderr : null)
                     .build();
         }
 
@@ -427,7 +428,8 @@ public class ProblemJudgeService {
                 .memory(memoryKb)
                 .passed(matched)
                 .status(matched ? STATUS_ACCEPTED : STATUS_WRONG_ANSWER)
-                .message(matched ? null : "第 " + caseData.caseNo() + " 个测试点答案错误")
+                // 答案错误由 status 表达，message 只放评测机的原始报错，不拼提示文案
+                .message(null)
                 .output(actual)
                 .build();
     }
