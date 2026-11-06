@@ -332,3 +332,12 @@
   background-color: var(--backend-sidebar-surface) !important;
   border-color: var(--backend-border) !important;
 }
+
+/* 消息提示统一走 plain 背景：中性面板底色加轻阴影，不再按类型铺高饱和底色。
+   直接写 background-color，类型类只覆盖变量，写法上不依赖样式加载顺序。
+   图标与文字仍保留类型色，提示语义不受影响。 */
+.el-message {
+  background-color: var(--el-bg-color-overlay);
+  border-color: var(--el-border-color-lighter);
+  box-shadow: var(--el-box-shadow-light);
+}

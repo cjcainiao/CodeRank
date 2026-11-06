@@ -46,21 +46,50 @@
       </section>
     </template>
 
+    <!-- 与用户端一致：多组样例按示例一、示例二编号，每组给出输入样例与输出样例 -->
     <section class="question-preview__section">
-      <h2 class="question-preview__heading">样例</h2>
-      <div v-if="filledSamples.length" class="question-preview__samples">
-        <article v-for="(sample, index) in filledSamples" :key="index" class="question-preview__sample">
-          <div class="question-preview__sample-row">
-            <span class="question-preview__sample-label">输入</span>
+      <template v-if="filledSamples.length">
+        <div v-for="(sample, index) in filledSamples" :key="index" class="question-preview__sample">
+          <h2 v-if="filledSamples.length > 1" class="question-preview__heading">
+            示例{{ chineseNumeral(index + 1) }}
+          </h2>
+
+          <h3 class="question-preview__sample-title">输入样例</h3>
+          <!-- 复制按钮浮在色块右上角，鼠标移入才显现 -->
+          <div class="question-preview__sample-block">
+            <el-button
+              class="question-preview__sample-copy"
+              link
+              type="primary"
+              :icon="Copy"
+              :aria-label="`复制示例${chineseNumeral(index + 1)}的输入样例`"
+              @click="copySample('输入样例', sample.input)"
+            >
+              复制
+            </el-button>
             <pre class="question-preview__sample-code">{{ sample.input || '（空）' }}</pre>
           </div>
-          <div class="question-preview__sample-row">
-            <span class="question-preview__sample-label">输出</span>
+
+          <h3 class="question-preview__sample-title">输出样例</h3>
+          <div class="question-preview__sample-block">
+            <el-button
+              class="question-preview__sample-copy"
+              link
+              type="primary"
+              :icon="Copy"
+              :aria-label="`复制示例${chineseNumeral(index + 1)}的输出样例`"
+              @click="copySample('输出样例', sample.output)"
+            >
+              复制
+            </el-button>
             <pre class="question-preview__sample-code">{{ sample.output || '（空）' }}</pre>
           </div>
-        </article>
-      </div>
-      <p v-else class="question-preview__empty">尚未填写样例</p>
+        </div>
+      </template>
+      <template v-else>
+        <h2 class="question-preview__heading">样例</h2>
+        <p class="question-preview__empty">尚未填写样例</p>
+      </template>
     </section>
 
     <section v-if="hint" class="question-preview__section">
@@ -72,8 +101,12 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { ElMessage } from 'element-plus'
+import { Copy } from '@lucide/vue'
 import MarkdownViewer from '@/components/editor/MarkdownViewer.vue'
 import { contrastTextColor } from '@/utils/colorUtil'
+import { copyText } from '@/utils/clipboardUtil'
+import { chineseNumeral } from '@/utils/numberUtil'
 
 // 判题模式：标准输入输出
 const JUDGE_MODE_STANDARD = 1
@@ -168,6 +201,17 @@ function tagStyle(color: string | null): Record<string, string> | undefined {
   if (!color) return undefined
   return { color: contrastTextColor(color), borderColor: color }
 }
+
+// 复制样例内容，空内容没有可复制的东西
+async function copySample(label: string, text: string) {
+  if (!text.trim()) {
+    ElMessage.warning(`该${label}为空`)
+    return
+  }
+  const copied = await copyText(text)
+  if (copied) ElMessage.success(`已复制${label}`)
+  else ElMessage.error('复制失败，请手动选中复制')
+}
 </script>
 
 <style scoped>
@@ -232,37 +276,61 @@ function tagStyle(color: string | null): Record<string, string> | undefined {
   font-size: 13px;
 }
 
-.question-preview__samples {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
 .question-preview__sample {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 14px 16px;
-  border: 1px solid var(--backend-border);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--backend-active) 40%, transparent);
 }
 
-.question-preview__sample-row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+/* 示例标题与上方内容拉开距离，和输入输出格式等小节区分开 */
+.question-preview__sample .question-preview__heading {
+  margin-top: 4px;
 }
 
-.question-preview__sample-label {
-  color: var(--backend-muted);
-  font-size: 12px;
+.question-preview__sample-title {
+  margin: 6px 0 0;
+  font-size: 14px;
   font-weight: 600;
+  line-height: 1.4;
 }
 
-/* 样例用等宽字体并保留原始空白 */
+/* 样例色块，复制按钮相对它定位在右上角 */
+.question-preview__sample-block {
+  position: relative;
+}
+
+/* 复制按钮平时隐藏，鼠标移入色块或键盘聚焦时才显现 */
+.question-preview__sample-copy {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--backend-active) 60%, var(--backend-surface));
+  font-size: 12px;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 120ms ease;
+}
+
+.question-preview__sample-block:hover .question-preview__sample-copy,
+.question-preview__sample-copy:focus-visible {
+  opacity: 1;
+}
+
+/* 触屏设备没有悬停态，直接常显 */
+@media (hover: none) {
+  .question-preview__sample-copy {
+    opacity: 1;
+  }
+}
+
+/* 样例用等宽字体并保留原始空白，底纹与题目区的浅色块一致；右侧留出复制按钮的位置 */
 .question-preview__sample-code {
   margin: 0;
+  padding: 10px 68px 10px 12px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--backend-active) 60%, var(--backend-surface));
   font-family: var(--code-font-family);
   font-size: 13px;
   line-height: 1.6;

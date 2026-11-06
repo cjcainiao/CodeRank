@@ -65,18 +65,44 @@
               <MarkdownViewer v-if="detail.outputFormat" :model-value="detail.outputFormat" />
             </template>
 
-            <h2 v-if="samples.length" class="question-panel__heading">示例</h2>
+            <!-- 多组样例按示例一、示例二编号；单组样例不显示编号，直接给出输入输出样例 -->
             <div v-if="samples.length" class="question-panel__samples">
-              <div v-for="(sample, index) in samples" :key="index" class="sample">
-                <div class="sample__row">
-                  <span class="sample__label">输入</span>
+              <section v-for="(sample, index) in samples" :key="index" class="sample">
+                <h2 v-if="samples.length > 1" class="question-panel__heading">
+                  示例{{ chineseNumeral(index + 1) }}
+                </h2>
+
+                <h3 class="sample__title">输入样例</h3>
+                <!-- 复制按钮浮在色块右上角，鼠标移入才显现 -->
+                <div class="sample__block">
+                  <el-button
+                    class="sample__copy"
+                    link
+                    type="primary"
+                    :icon="Copy"
+                    :aria-label="`复制示例${chineseNumeral(index + 1)}的输入样例`"
+                    @click="copySample('输入样例', sample.input)"
+                  >
+                    复制
+                  </el-button>
                   <pre class="sample__code">{{ sample.input }}</pre>
                 </div>
-                <div class="sample__row">
-                  <span class="sample__label">输出</span>
+
+                <h3 class="sample__title">输出样例</h3>
+                <div class="sample__block">
+                  <el-button
+                    class="sample__copy"
+                    link
+                    type="primary"
+                    :icon="Copy"
+                    :aria-label="`复制示例${chineseNumeral(index + 1)}的输出样例`"
+                    @click="copySample('输出样例', sample.output)"
+                  >
+                    复制
+                  </el-button>
                   <pre class="sample__code">{{ sample.output }}</pre>
                 </div>
-              </div>
+              </section>
             </div>
 
             <template v-if="detail.hint">
@@ -216,21 +242,34 @@
                         <span class="code-panel__result-status" :class="resultClass">
                           {{ resultLabel }}
                         </span>
-                        <span v-if="result.time !== undefined" class="code-panel__result-meta">
-                          {{ result.time }} ms / {{ result.memory }} KB
+                        <!-- 比对结论紧跟状态，与耗时内存一起靠右排布 -->
+                        <span class="code-panel__result-tail">
+                          <span v-if="result.hint" class="code-panel__result-hint">
+                            {{ result.hint }}
+                          </span>
+                          <span v-if="result.time !== undefined" class="code-panel__result-meta">
+                            {{ result.time }} ms / {{ result.memory }} KB
+                          </span>
                         </span>
                       </div>
-                      <pre v-if="result.output" class="code-panel__result-output">{{
-                        result.output
-                      }}</pre>
-                      <pre v-if="result.error" class="code-panel__result-error">{{
-                        result.error
-                      }}</pre>
+                      <!-- 状态行固定在框顶，只有输出内容滚动 -->
+                      <div class="code-panel__result-scroll">
+                        <pre v-if="result.output" class="code-panel__result-output">{{
+                          result.output
+                        }}</pre>
+                        <pre v-if="result.error" class="code-panel__result-error">{{
+                          result.error
+                        }}</pre>
+                      </div>
                     </div>
 
-                    <div v-if="judging || judgeResult" class="code-panel__judge">
+                    <!-- 评测结果与测试运行结果互斥，避免两块内容同时占位 -->
+                    <div v-if="!result && (judging || judgeResult)" class="code-panel__judge">
                       <div class="code-panel__judge-header">
-                        <span class="code-panel__judge-status" :class="judgeClass">
+                        <span
+                          class="code-panel__judge-status"
+                          :style="{ color: judgeStatusColor }"
+                        >
                           {{ judgeLabel }}
                         </span>
                         <span v-if="judgeResult?.totalCount" class="code-panel__judge-meta">
@@ -239,50 +278,16 @@
                             · {{ judgeResult.timeUsed }} ms / {{ judgeResult.memoryUsed }} KB
                           </template>
                         </span>
+                        <el-button
+                          v-if="judgeResult?.finished"
+                          type="primary"
+                          link
+                          class="code-panel__judge-detail"
+                          @click="judgeDialogVisible = true"
+                        >
+                          查看测试点
+                        </el-button>
                       </div>
-
-                      <el-progress
-                        v-if="judging"
-                        class="code-panel__judge-progress"
-                        :percentage="100"
-                        :indeterminate="true"
-                        :duration="2"
-                        :show-text="false"
-                        :stroke-width="4"
-                      />
-
-                      <pre v-if="judgeResult?.message" class="code-panel__judge-message">{{
-                        judgeResult.message
-                      }}</pre>
-
-                      <el-table
-                        v-if="judgeResult?.cases?.length"
-                        :data="judgeResult.cases"
-                        size="small"
-                        border
-                        class="code-panel__judge-table"
-                      >
-                        <el-table-column prop="caseNo" label="测试点" width="80" align="center" />
-                        <el-table-column label="结果" width="140">
-                          <template #default="{ row }">
-                            <el-tag size="small" :type="row.passed ? 'success' : 'danger'">
-                              {{ row.status }}
-                            </el-tag>
-                          </template>
-                        </el-table-column>
-                        <el-table-column prop="time" label="耗时" width="90" align="right">
-                          <template #default="{ row }">{{ row.time }} ms</template>
-                        </el-table-column>
-                        <el-table-column prop="memory" label="内存" width="100" align="right">
-                          <template #default="{ row }">{{ row.memory }} KB</template>
-                        </el-table-column>
-                        <el-table-column
-                          prop="message"
-                          label="说明"
-                          min-width="180"
-                          show-overflow-tooltip
-                        />
-                      </el-table>
                     </div>
                   </div>
                 </div>
@@ -294,6 +299,20 @@
     </el-splitter>
 
     <el-empty v-else-if="!loading" description="题目不存在或未发布" />
+
+    <!-- 测试点详情弹窗，评测完成后按需打开 -->
+    <el-dialog
+      v-model="judgeDialogVisible"
+      title="评测结果"
+      width="880px"
+      class="judge-dialog"
+      append-to-body
+    >
+      <JudgeResultPanel v-if="judgeResult" :cases="judgeResult.cases ?? []" />
+    </el-dialog>
+
+    <!-- 评测通过时两侧花筒齐放 -->
+    <ConfettiClick ref="confettiRef" />
   </section>
 </template>
 
@@ -301,9 +320,13 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Play, RotateCcw, Send } from '@lucide/vue'
+import { Copy, Play, RotateCcw, Send } from '@lucide/vue'
 import MarkdownViewer from '@/components/editor/MarkdownViewer.vue'
 import CodeEditor from '@/components/editor/CodeEditor.vue'
+import JudgeResultPanel from '@/views/problem/components/JudgeResultPanel.vue'
+import ConfettiClick from '@/components/celebration/ConfettiClick.vue'
+import { copyText } from '@/utils/clipboardUtil'
+import { chineseNumeral } from '@/utils/numberUtil'
 import { getQuestionDetail, type QuestionDetailVO } from '@/api/home/questionBank'
 import { runCode as requestRunCode } from '@/api/problem/runCode'
 import {
@@ -345,6 +368,8 @@ interface RunResult {
   status: number
   output: string
   error: string
+  // 状态行右侧的补充说明，如输出与预期不符
+  hint?: string
   time?: number
   memory?: number
 }
@@ -378,6 +403,12 @@ const result = ref<RunResult | null>(null)
 const submitting = ref(false)
 const judging = ref(false)
 const judgeResult = ref<SubmissionStatusVO | null>(null)
+
+// 测试点详情弹窗的显示状态
+const judgeDialogVisible = ref(false)
+
+// 礼花组件的调用入口，评测通过时触发
+const confettiRef = ref<InstanceType<typeof ConfettiClick> | null>(null)
 
 // 轮询定时器，离开页面时需要清理
 let pollTimer: number | null = null
@@ -482,6 +513,17 @@ function selectCase(caseNo: number) {
   expectedOutput.value = matched.expected ?? ''
 }
 
+// 复制样例内容，空内容没有可复制的东西
+async function copySample(label: string, text: string) {
+  if (!text.trim()) {
+    ElMessage.warning(`该${label}为空`)
+    return
+  }
+  const copied = await copyText(text)
+  if (copied) ElMessage.success(`已复制${label}`)
+  else ElMessage.error('复制失败，请手动选中复制')
+}
+
 // 逐行去除行尾空白与末尾空行后比较，与常见 OJ 的比对规则一致
 function normalizeOutput(text: string): string {
   return text
@@ -510,12 +552,10 @@ const resultClass = computed(() =>
   result.value?.status === 1 ? 'code-panel__result-status--ok' : 'code-panel__result-status--fail',
 )
 
-// 提交结果对应的样式类
-const judgeClass = computed(() => {
-  if (judging.value) return ''
-  return judgeResult.value?.accepted
-    ? 'code-panel__judge-status--ok'
-    : 'code-panel__judge-status--fail'
+// 提交结果的状态颜色：只有通过与未通过两种，具体失败原因由测试点卡片区分
+const judgeStatusColor = computed(() => {
+  if (judging.value || !judgeResult.value) return ''
+  return judgeResult.value.accepted ? 'var(--status-success)' : 'var(--status-danger)'
 })
 
 // 提交结果的展示文案，评测中显示进度提示
@@ -535,6 +575,12 @@ const STATUS_TEXT: Record<string, string> = {
   'Invalid Request': '请求参数有误',
 }
 
+// 状态对应的简要文案：优先中文映射，取不到时退回评测机原始状态
+function statusText(status: string | null | undefined, fallback: string): string {
+  if (!status) return fallback
+  return STATUS_TEXT[status] ?? status
+}
+
 // 运行代码，由后端挑选评测机执行
 async function runCode() {
   if (!code.value.trim()) {
@@ -550,6 +596,10 @@ async function runCode() {
 
   running.value = true
   result.value = null
+  // 测试运行与提交评测共用同一块输出区，开始运行前清掉上一次的评测结果
+  judgeResult.value = null
+  judging.value = false
+  stopPolling()
   try {
     const response = await requestRunCode({
       questionId: questionId.value,
@@ -564,15 +614,19 @@ async function runCode() {
     // 填了预期输出时以比对结果决定状态
     const matched = ok ? matchExpected(stdout) : null
 
+    // 失败原因优先取状态中文名，状态取不到时才用评测机报错兜底
+    const reason = ok
+      ? matched === false
+        ? '输出与预期不符'
+        : ''
+      : statusText(response.status, stageText + (response.error || response.stderr || '运行失败'))
+
     result.value = {
       status: ok && matched !== false ? 1 : 0,
       output: stdout,
-      error: ok
-        ? matched === false
-          ? '输出与预期不符'
-          : (response.stderr ?? '')
-        : stageText +
-          (response.stderr || response.error || STATUS_TEXT[response.status ?? ''] || '运行失败'),
+      // 结论展示在状态行右侧，滚动区只放输出的原文与 stderr
+      hint: reason || undefined,
+      error: ok ? (response.stderr ?? '') : response.stderr || response.error || '',
       time: response.time === null ? undefined : Math.round(response.time / 1_000_000),
       memory: response.memory === null ? undefined : Math.round(response.memory / 1024),
     }
@@ -631,7 +685,7 @@ function startPolling(submissionId: string) {
   void pollStatus(submissionId)
 }
 
-// 查一次任务状态，完成后停止轮询并展示结果
+// 查一次任务状态，完成后停止轮询并打开测试点弹窗
 async function pollStatus(submissionId: string) {
   try {
     const status = await getSubmissionStatus(submissionId)
@@ -641,7 +695,11 @@ async function pollStatus(submissionId: string) {
       judging.value = false
       if (status.accepted) {
         ElMessage.success('全部测试点通过')
+        // 通过时两侧花筒齐放
+        void confettiRef.value?.celebrate()
       }
+      // 评测完成后直接弹出测试点详情，省去手动点击
+      judgeDialogVisible.value = true
     }
   } catch {
     // 查询失败时停止轮询，避免持续弹错
@@ -717,7 +775,7 @@ onUnmounted(() => {
     background-color 150ms ease;
 }
 
-.question-detail__splitter :deep(.el-splitter-bar:hover .el-splitter-bar__dragger:before),
+/* 仅在拖动时加深，悬停不做高亮 */
 .question-detail__splitter :deep(.el-splitter-bar__dragger-active:before) {
   width: 2px;
   background: var(--el-color-primary, #1f6feb);
@@ -808,33 +866,65 @@ onUnmounted(() => {
 .question-panel__samples {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 20px;
 }
 
+/* 每组样例依次排开：示例标题、输入样例、输出样例 */
 .sample {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 14px 16px;
-  border-radius: 8px;
-  background: var(--problem-soft);
 }
 
-.sample__row {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+/* 示例标题与上方内容拉开距离，和输入输出格式等小节区分开 */
+.sample .question-panel__heading {
+  margin: 4px 0 0;
 }
 
-.sample__label {
-  color: var(--problem-muted);
-  font-size: 12px;
+.sample__title {
+  margin: 6px 0 0;
+  font-size: 14px;
   font-weight: 600;
+  line-height: 1.4;
 }
 
-/* 样例用等宽字体并保留原始空白 */
+/* 样例色块，复制按钮相对它定位在右上角 */
+.sample__block {
+  position: relative;
+}
+
+/* 复制按钮平时隐藏，鼠标移入色块或键盘聚焦时才显现 */
+.sample__copy {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--problem-soft);
+  font-size: 12px;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 120ms ease;
+}
+
+.sample__block:hover .sample__copy,
+.sample__copy:focus-visible {
+  opacity: 1;
+}
+
+/* 触屏设备没有悬停态，直接常显 */
+@media (hover: none) {
+  .sample__copy {
+    opacity: 1;
+  }
+}
+
+/* 样例用等宽字体并保留原始空白，底纹与题目区的浅色块一致；右侧留出复制按钮的位置 */
 .sample__code {
   margin: 0;
+  padding: 10px 68px 10px 12px;
+  border-radius: 6px;
+  background: var(--problem-soft);
   font-family: var(--code-font-family);
   font-size: 13px;
   line-height: 1.6;
@@ -866,7 +956,7 @@ onUnmounted(() => {
   height: 0;
 }
 
-/* 上下分隔线与左右分隔线使用相同的悬停和拖动反馈 */
+/* 上下分隔线，仅在拖动时加深，悬停不做高亮 */
 .code-panel__splitter :deep(.el-splitter-bar__dragger:before) {
   width: 100%;
   height: 1px;
@@ -876,7 +966,6 @@ onUnmounted(() => {
     background-color 150ms ease;
 }
 
-.code-panel__splitter :deep(.el-splitter-bar:hover .el-splitter-bar__dragger:before),
 .code-panel__splitter :deep(.el-splitter-bar__dragger-active:before) {
   height: 2px;
   background: var(--el-color-primary, #1f6feb);
@@ -922,7 +1011,7 @@ onUnmounted(() => {
   border-right: 1px solid var(--problem-border);
 }
 
-/* 下半区保留左右留白，内容较多时显示细滚动条 */
+/* 下半区保留左右留白，隐藏滚动条但保留滚动能力 */
 .code-panel__console {
   display: flex;
   flex: 1;
@@ -931,18 +1020,12 @@ onUnmounted(() => {
   min-height: 0;
   padding: 0 16px 16px;
   overflow-y: auto;
-  scrollbar-color: var(--problem-scrollbar) transparent;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .code-panel__console::-webkit-scrollbar {
-  width: 8px;
-}
-
-.code-panel__console::-webkit-scrollbar-thumb {
-  border: 2px solid var(--problem-bg);
-  border-radius: 999px;
-  background: var(--problem-scrollbar);
+  display: none;
 }
 
 .code-panel__language {
@@ -1043,7 +1126,8 @@ onUnmounted(() => {
 .code-panel__case-tab {
   position: relative;
   flex: none;
-  padding: 6px 14px;
+  /* 纵向内边距撑高头部，按钮随之与上下边框拉开距离；下划线仍贴住底边框 */
+  padding: 16px 14px;
   border: 0;
   background: transparent;
   color: var(--problem-muted);
@@ -1081,7 +1165,8 @@ onUnmounted(() => {
 }
 
 .code-panel__test-title {
-  padding: 6px 0;
+  /* 与用例标签同高，保证头部高度一致 */
+  padding: 16px 0;
   color: var(--problem-muted);
   font-size: 13px;
   font-weight: 600;
@@ -1155,7 +1240,6 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   margin-left: auto;
-  padding-bottom: 4px;
 }
 
 .code-panel__actions :deep(.el-button + .el-button) {
@@ -1169,16 +1253,19 @@ onUnmounted(() => {
   min-width: 0;
 }
 
+/* 固定高度，内容超出时在框内滚动，避免结果把整个测试区顶开 */
 .code-panel__output-body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-height: 96px;
+  height: 180px;
   min-width: 0;
   padding: 10px 12px;
   border-radius: 6px;
   background: var(--problem-soft);
   color: var(--problem-text);
+  /* 状态行与结果区自行分配高度，滚动只发生在结果区 */
+  overflow: hidden;
 }
 
 .code-panel__output-placeholder {
@@ -1186,10 +1273,46 @@ onUnmounted(() => {
   font-size: 13px;
 }
 
+/* 测试运行结果：状态行占位不缩放，余下高度都给滚动区 */
 .code-panel__result {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: 0;
+}
+
+/* 提交评测结果：同上 */
+.code-panel__judge {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.code-panel__result-scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-color: var(--problem-scrollbar) transparent;
+  scrollbar-width: thin;
+}
+
+/* 滚动条贴着面板底色，与题目区的细滚动条保持一致 */
+.code-panel__result-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.code-panel__result-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid var(--problem-soft);
+  border-radius: 999px;
+  background: var(--problem-scrollbar);
+}
+
+.code-panel__result-scroll::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .code-panel__result-header {
@@ -1197,6 +1320,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex: none;
 }
 
 .code-panel__result-status {
@@ -1210,6 +1334,22 @@ onUnmounted(() => {
 
 .code-panel__result-status--fail {
   color: var(--status-danger);
+}
+
+/* 状态行右侧：比对结论与耗时内存并排，窄屏可折行 */
+.code-panel__result-tail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 4px 12px;
+  min-width: 0;
+}
+
+/* 比对结论用警示色，与下方输出内容区分开 */
+.code-panel__result-hint {
+  color: var(--status-danger);
+  font-size: 12px;
 }
 
 .code-panel__result-meta {
@@ -1232,18 +1372,13 @@ onUnmounted(() => {
 }
 
 /* 提交评测结果 */
-.code-panel__judge {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
 .code-panel__judge-header {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
   gap: 8px 12px;
+  flex: none;
 }
 
 .code-panel__judge-status {
@@ -1251,36 +1386,15 @@ onUnmounted(() => {
   font-weight: 700;
 }
 
-.code-panel__judge-status--ok {
-  color: var(--status-success);
-}
-
-.code-panel__judge-status--fail {
-  color: var(--status-danger);
-}
-
 .code-panel__judge-meta {
   color: var(--problem-muted);
   font-size: 12px;
 }
 
-.code-panel__judge-progress {
-  width: 100%;
-}
-
-.code-panel__judge-message {
-  margin: 0;
-  padding: 10px 12px;
-  border-radius: 6px;
-  background: var(--problem-soft);
-  font-family: var(--code-font-family);
-  font-size: 13px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.code-panel__judge-table {
+/* 状态行右侧的“查看测试点”入口，不与耗时内存抢位置 */
+.code-panel__judge-detail {
+  flex: none;
+  margin-left: 12px;
   font-size: 13px;
 }
 
