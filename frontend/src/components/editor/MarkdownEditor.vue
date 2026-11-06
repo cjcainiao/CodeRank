@@ -162,5 +162,14 @@ defineExpose({
 /* 让编辑器撑满外层容器，高度统一由 height 控制 */
 .markdown-editor :deep(.md-editor) {
   height: 100%;
+  --md-bk-color: var(--backend-surface);
+  --md-bk-color-outstand: var(--backend-sidebar-surface);
+  --md-bk-hover-color: var(--backend-active);
+  --md-color: var(--backend-text);
+  --md-hover-color: var(--backend-text);
+  --md-border-color: var(--backend-border);
+  --md-border-hover-color: var(--backend-muted);
+  --md-scrollbar-bg-color: var(--backend-surface);
+  --md-scrollbar-thumb-color: var(--backend-muted);
 }
 </style>

@@ -50,23 +50,21 @@
           </el-select>
         </el-form-item>
         <el-form-item label="初始代码" prop="template">
-          <el-input
+          <CodeEditor
             v-model="form.template"
-            type="textarea"
-            :rows="10"
-            resize="vertical"
-            placeholder="用户打开题目时看到的代码，函数框架等"
             class="code-template__editor"
+            :language="editorLanguage"
+            height="240px"
+            placeholder="用户打开题目时看到的代码，函数框架等"
           />
         </el-form-item>
         <el-form-item label="桩程序" prop="stubTemplate">
-          <el-input
+          <CodeEditor
             v-model="form.stubTemplate"
-            type="textarea"
-            :rows="12"
-            resize="vertical"
-            :placeholder="STUB_PLACEHOLDER_HINT"
             class="code-template__editor"
+            :language="editorLanguage"
+            height="280px"
+            :placeholder="STUB_PLACEHOLDER_HINT"
           />
         </el-form-item>
       </el-form>
@@ -83,6 +81,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus } from '@lucide/vue'
+import CodeEditor from '@/components/editor/CodeEditor.vue'
 import {
   createQuestionCodeTemplate,
   deleteQuestionCodeTemplate,
@@ -93,11 +92,11 @@ import {
 
 // 语言选项，与后端枚举一致
 const LANGUAGE_OPTIONS = [
-  { value: 1, label: 'Java' },
-  { value: 2, label: 'C++' },
-  { value: 3, label: 'Python' },
-  { value: 4, label: 'Go' },
-  { value: 5, label: 'JavaScript' },
+  { value: 1, label: 'Java', code: 'java' },
+  { value: 2, label: 'C++', code: 'cpp' },
+  { value: 3, label: 'Python', code: 'python' },
+  { value: 4, label: 'Go', code: 'go' },
+  { value: 5, label: 'JavaScript', code: 'javascript' },
 ] as const
 
 // 桩程序占位符说明，用变量拼接避免模板里出现双花括号
@@ -167,6 +166,11 @@ const form = reactive<{ language: number; template: string; stubTemplate: string
   template: '',
   stubTemplate: '',
 })
+
+// 编辑器按表单选中的语言高亮，未知语言退化为纯文本
+const editorLanguage = computed(
+  () => LANGUAGE_OPTIONS.find((option) => option.value === form.language)?.code ?? 'text',
+)
 
 const rules: FormRules = {
   language: [{ required: true, message: '请选择语言', trigger: 'change' }],
@@ -336,7 +340,7 @@ async function removeTemplate(row: TemplateRow) {
   max-height: 96px;
   margin: 0;
   overflow: hidden;
-  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  font-family: var(--code-font-family);
   font-size: 12px;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -348,11 +352,8 @@ async function removeTemplate(row: TemplateRow) {
   font-size: 12px;
 }
 
-/* 代码编辑用等宽字体，避免缩进错位 */
-.code-template__editor :deep(.el-textarea__inner) {
-  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
-  font-size: 13px;
-  line-height: 1.6;
-  tab-size: 4;
+/* 代码编辑卡片占满表单项宽度 */
+.code-template__editor {
+  width: 100%;
 }
 </style>

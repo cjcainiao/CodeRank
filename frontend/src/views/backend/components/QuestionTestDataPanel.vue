@@ -340,7 +340,7 @@ async function removeTestData(row: TestDataRow) {
 
 .test-data__file-name {
   overflow: hidden;
-  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  font-family: var(--code-font-family);
   font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;

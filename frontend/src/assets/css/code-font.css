@@ -1,0 +1,15 @@
+/* 代码字体，供编辑器与代码块统一引用 */
+
+@font-face {
+  font-family: 'Consolas';
+  src: url('../fonts/Consolas-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  /* 只加载常规字重，代码区不需要粗体变形 */
+  font-display: swap;
+}
+
+/* 代码字体栈，等宽场景统一使用 */
+:root {
+  --code-font-family: 'Consolas', 'Cascadia Code', 'JetBrains Mono', monospace;
+}

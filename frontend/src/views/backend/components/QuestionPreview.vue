@@ -73,6 +73,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import MarkdownViewer from '@/components/editor/MarkdownViewer.vue'
+import { contrastTextColor } from '@/utils/colorUtil'
 
 // 判题模式：标准输入输出
 const JUDGE_MODE_STANDARD = 1
@@ -165,7 +166,7 @@ const difficultyTagType = computed<'success' | 'warning' | 'danger'>(() => {
 // 标签按自定义色渲染
 function tagStyle(color: string | null): Record<string, string> | undefined {
   if (!color) return undefined
-  return { color: '#fff', borderColor: color }
+  return { color: contrastTextColor(color), borderColor: color }
 }
 </script>
 
@@ -262,7 +263,7 @@ function tagStyle(color: string | null): Record<string, string> | undefined {
 /* 样例用等宽字体并保留原始空白 */
 .question-preview__sample-code {
   margin: 0;
-  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  font-family: var(--code-font-family);
   font-size: 13px;
   line-height: 1.6;
   white-space: pre-wrap;

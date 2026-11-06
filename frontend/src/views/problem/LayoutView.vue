@@ -21,28 +21,28 @@ import { ChevronLeft } from '@lucide/vue'
 <style scoped>
 /* 做题模块独立于首页，主题变量挂在本模块根节点 */
 .problem-shell {
-  --problem-bg: #fff;
-  --problem-text: #252733;
-  --problem-muted: #777b88;
-  --problem-soft: #f2f2f2;
-  --problem-border: #e8e9eb;
+  --problem-bg: var(--backend-surface);
+  --problem-text: var(--backend-text);
+  --problem-muted: var(--backend-muted);
+  --problem-soft: color-mix(in srgb, var(--backend-active) 55%, var(--backend-surface));
+  --problem-border: var(--backend-border);
+  --problem-scrollbar: color-mix(in srgb, var(--problem-muted) 55%, var(--problem-bg));
 
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   background: var(--problem-bg);
   color: var(--problem-text);
 }
 
-/* 顶部返回条，宽度与内容区对齐 */
+/* 顶部返回条，横向铺满并贴边 */
 .problem-bar {
   display: flex;
   align-items: center;
   gap: 16px;
-  width: min(100%, 1400px);
-  margin: 0 auto;
-  padding: 14px 32px;
+  flex: none;
+  padding: 10px 20px;
   border-bottom: 1px solid var(--problem-border);
 }
 
@@ -65,18 +65,18 @@ import { ChevronLeft } from '@lucide/vue'
   font-weight: 700;
 }
 
+/* 内容区铺满剩余高度，页面内部自行滚动 */
 .problem-main {
   flex: 1;
-  width: min(100%, 1400px);
-  margin: 0 auto;
-  padding: 24px 32px 48px;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 @media (max-width: 760px) {
-  .problem-bar,
-  .problem-main {
-    padding-right: 16px;
-    padding-left: 16px;
+  .problem-bar {
+    padding-right: 14px;
+    padding-left: 14px;
   }
 }
 </style>

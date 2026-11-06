@@ -51,23 +51,21 @@
         <!-- 核心代码模式用 JSON 入参 -->
         <template v-if="isCoreMode">
           <el-form-item label="入参" prop="args">
-            <el-input
+            <CodeEditor
               v-model="form.args"
-              type="textarea"
-              :rows="4"
-              resize="vertical"
-              placeholder="JSON 数组，如 [[2,7,11,15],9]"
               class="test-case__editor"
+              language="json"
+              height="150px"
+              placeholder="JSON 数组，如 [[2,7,11,15],9]"
             />
           </el-form-item>
           <el-form-item label="期望返回值" prop="expected">
-            <el-input
+            <CodeEditor
               v-model="form.expected"
-              type="textarea"
-              :rows="3"
-              resize="vertical"
-              placeholder="JSON 值，如 [0,1]"
               class="test-case__editor"
+              language="json"
+              height="120px"
+              placeholder="JSON 值，如 [0,1]"
             />
           </el-form-item>
         </template>
@@ -75,23 +73,21 @@
         <!-- 标准输入输出模式用纯文本 -->
         <template v-else>
           <el-form-item label="标准输入" prop="inputData">
-            <el-input
+            <CodeEditor
               v-model="form.inputData"
-              type="textarea"
-              :rows="5"
-              resize="vertical"
-              placeholder="程序的标准输入内容，注意保留换行"
               class="test-case__editor"
+              language="text"
+              height="180px"
+              placeholder="程序的标准输入内容，注意保留换行"
             />
           </el-form-item>
           <el-form-item label="标准输出" prop="expectedOut">
-            <el-input
+            <CodeEditor
               v-model="form.expectedOut"
-              type="textarea"
-              :rows="4"
-              resize="vertical"
-              placeholder="期望的标准输出内容"
               class="test-case__editor"
+              language="text"
+              height="150px"
+              placeholder="期望的标准输出内容"
             />
           </el-form-item>
         </template>
@@ -119,6 +115,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Plus } from '@lucide/vue'
+import CodeEditor from '@/components/editor/CodeEditor.vue'
 import {
   createQuestionTestCase,
   deleteQuestionTestCase,
@@ -404,16 +401,15 @@ async function removeTestCase(row: CaseRow) {
   max-height: 72px;
   margin: 0;
   overflow: hidden;
-  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  font-family: var(--code-font-family);
   font-size: 12px;
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-.test-case__editor :deep(.el-textarea__inner) {
-  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
-  font-size: 13px;
-  line-height: 1.6;
+/* 代码编辑卡片占满表单项宽度 */
+.test-case__editor {
+  width: 100%;
 }
 </style>

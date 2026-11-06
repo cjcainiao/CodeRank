@@ -14,6 +14,8 @@ body,
 
 body {
   margin: 0;
+  background: var(--backend-surface);
+  color: var(--backend-text);
   font-family:
     system-ui,
     -apple-system,

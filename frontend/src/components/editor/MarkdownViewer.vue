@@ -61,6 +61,15 @@ const theme = computed(() => (darkMode.value ? 'dark' : 'light'))
   overflow-y: auto;
 }
 
+/* 预览背景与页面主题一致，避免暗色模式出现纯黑内容块 */
+.markdown-viewer :deep(.md-editor) {
+  --md-bk-color: var(--backend-surface);
+  --md-color: var(--backend-text);
+  --md-border-color: var(--backend-border);
+  --md-scrollbar-bg-color: var(--backend-surface);
+  --md-scrollbar-thumb-color: var(--backend-muted);
+}
+
 /* 去掉只读渲染的默认外边距，交由父容器控制留白 */
 .markdown-viewer :deep(.md-editor-preview-wrapper) {
   padding: 0;

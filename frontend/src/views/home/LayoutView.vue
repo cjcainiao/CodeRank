@@ -22,12 +22,12 @@ import HomeAvatar from './components/HomeAvatar.vue'
 
 <style scoped>
 .home-shell {
-  --home-navbar-bg: #fff;
-  --home-navbar-text: #252733;
-  --home-navbar-muted: #777b88;
-  --home-popover-surface: #fff;
-  --home-popover-soft: #f2f2f2;
-  --home-popover-border: #e8e9eb;
+  --home-navbar-bg: var(--backend-surface);
+  --home-navbar-text: var(--backend-text);
+  --home-navbar-muted: var(--backend-muted);
+  --home-popover-surface: var(--backend-sidebar-surface);
+  --home-popover-soft: color-mix(in srgb, var(--backend-active) 55%, var(--backend-surface));
+  --home-popover-border: var(--backend-border);
 
   min-height: 100vh;
   min-height: 100dvh;

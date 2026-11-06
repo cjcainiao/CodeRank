@@ -37,31 +37,27 @@
     </div>
 
     <div class="test-submit__grid">
-      <label class="test-submit__field">
+      <div class="test-submit__field">
         <span class="test-submit__label">代码</span>
-        <el-input
+        <CodeEditor
           v-model="code"
           class="test-submit__editor"
-          type="textarea"
-          :rows="22"
-          resize="none"
-          spellcheck="false"
+          :language="language"
+          height="420px"
           placeholder="在此编写代码"
         />
-      </label>
+      </div>
 
-      <label class="test-submit__field">
+      <div class="test-submit__field">
         <span class="test-submit__label">标准输入</span>
-        <el-input
+        <CodeEditor
           v-model="input"
           class="test-submit__input"
-          type="textarea"
-          :rows="8"
-          resize="vertical"
-          spellcheck="false"
+          language="text"
+          height="180px"
           placeholder="选填，作为程序的标准输入"
         />
-      </label>
+      </div>
     </div>
 
     <div v-if="result" class="test-submit__result">
@@ -113,6 +109,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Play, RotateCcw, Copy } from '@lucide/vue'
+import CodeEditor from '@/components/editor/CodeEditor.vue'
 import { pageJudgeMachines, type JudgeMachineVO } from '@/api/backend/judgeMachine'
 import { submitTestCode, type TestSubmitResultVO } from '@/api/backend/testSubmit'
 
@@ -313,11 +310,10 @@ onMounted(loadMachines)
   font-size: 13px;
 }
 
-.test-submit__editor :deep(.el-textarea__inner),
-.test-submit__input :deep(.el-textarea__inner) {
-  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
-  font-size: 13px;
-  line-height: 1.6;
+/* 代码卡片占满字段宽度 */
+.test-submit__editor,
+.test-submit__input {
+  width: 100%;
 }
 
 .test-submit__result {
@@ -366,7 +362,7 @@ onMounted(loadMachines)
   max-height: 320px;
   overflow: auto;
   border-radius: 6px;
-  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  font-family: var(--code-font-family);
   font-size: 13px;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -378,7 +374,7 @@ onMounted(loadMachines)
 }
 
 .test-submit__result-error {
-  background: rgb(245 108 108 / 10%);
-  color: #c45656;
+  background: color-mix(in srgb, var(--status-danger) 10%, var(--backend-surface));
+  color: var(--status-danger);
 }
 </style>

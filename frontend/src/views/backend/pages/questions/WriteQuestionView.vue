@@ -147,21 +147,19 @@
                 删除
               </el-button>
             </header>
-            <el-input
+            <CodeEditor
               v-model="sample.input"
-              type="textarea"
-              :rows="4"
-              resize="vertical"
+              class="page__sample-input"
+              language="text"
+              height="120px"
               placeholder="输入"
-              class="page__sample-input"
             />
-            <el-input
+            <CodeEditor
               v-model="sample.output"
-              type="textarea"
-              :rows="4"
-              resize="vertical"
-              placeholder="输出"
               class="page__sample-input"
+              language="text"
+              height="120px"
+              placeholder="输出"
             />
           </article>
           <el-button class="page__sample-add" :icon="Plus" @click="addSample">添加样例</el-button>
@@ -222,6 +220,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Plus, Trash2 } from '@lucide/vue'
 import MarkdownEditor from '@/components/editor/MarkdownEditor.vue'
+import CodeEditor from '@/components/editor/CodeEditor.vue'
 import QuestionPreview from '@/views/backend/components/QuestionPreview.vue'
 import QuestionCodeTemplatePanel, {
   type DraftCodeTemplate,
@@ -586,10 +585,9 @@ onMounted(() => {
   font-weight: 600;
 }
 
-/* 样例输入输出用等宽字体，便于核对空格与换行 */
-.page__sample-input :deep(.el-textarea__inner) {
-  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
-  font-size: 13px;
+/* 样例输入输出卡片占满栏宽 */
+.page__sample-input {
+  width: 100%;
 }
 
 .page__sample-add {

@@ -312,15 +312,15 @@ onBeforeUnmount(() => {
 }
 
 .question-item__difficulty--easy {
-  color: #00b8a3;
+  color: var(--status-success);
 }
 
 .question-item__difficulty--medium {
-  color: #ffc01e;
+  color: var(--status-warning);
 }
 
 .question-item__difficulty--hard {
-  color: #ff375f;
+  color: var(--status-danger);
 }
 
 .question-bank__pagination {

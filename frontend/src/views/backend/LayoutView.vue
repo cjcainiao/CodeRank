@@ -24,31 +24,15 @@
 </template>
 
 <script setup lang="ts">
-import { onUnmounted, provide, ref, watch } from 'vue'
+import { provide, ref } from 'vue'
 import { useThemeMode } from '@/utils/themeModeUtil'
 import BackendSidebar from './components/BackendSidebar.vue'
 import BackendHistory from './components/BackendHistory.vue'
-
-// 暗色模式挂在 html 上的类名，供传送门组件取用主题变量
-const DARK_CLASS = 'backend-dark'
 
 // 手机端默认收起侧栏
 const isSidebarCollapsed = ref(window.matchMedia('(max-width: 760px)').matches)
 const { themeMode, darkMode, changeTheme } = useThemeMode()
 provide('backendDarkMode', darkMode)
-
-// 暗色状态同步到 html，使挂到 body 的下拉、气泡也能读到主题变量
-watch(
-  darkMode,
-  (dark) => {
-    document.documentElement.classList.toggle(DARK_CLASS, dark)
-  },
-  { immediate: true },
-)
-
-onUnmounted(() => {
-  document.documentElement.classList.remove(DARK_CLASS)
-})
 
 // 站点名称，供侧栏品牌与页面标题共用
 const siteTitle = ref('CodeRank')

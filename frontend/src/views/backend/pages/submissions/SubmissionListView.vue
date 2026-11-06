@@ -265,7 +265,7 @@ onMounted(loadSubmissions)
   overflow: auto;
   border-radius: 6px;
   background: var(--backend-active);
-  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  font-family: var(--code-font-family);
   font-size: 13px;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -273,7 +273,7 @@ onMounted(loadSubmissions)
 }
 
 .submission__error {
-  background: rgb(245 108 108 / 10%);
-  color: #c45656;
+  background: color-mix(in srgb, var(--status-danger) 10%, var(--backend-surface));
+  color: var(--status-danger);
 }
 </style>

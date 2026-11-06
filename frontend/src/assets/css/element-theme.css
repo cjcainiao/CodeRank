@@ -1,7 +1,8 @@
 /* Element Plus 主题变量桥接 */
 
-/* 后台调色板定义在根节点，使挂到 body 的下拉、气泡也能取到变量 */
+/* 全站调色板定义在根节点，使传送门组件也能取到变量 */
 :root {
+  color-scheme: light;
   --backend-surface: #fff;
   --backend-sidebar-surface: #fff;
   --backend-border: #e8e9eb;
@@ -11,10 +12,14 @@
   --backend-active-text: #252733;
   --backend-close: #585858;
   --backend-close-hover: #383838;
+  --status-success: #087f72;
+  --status-warning: #8a6200;
+  --status-danger: #b42346;
 }
 
-/* 暗色模式由 LayoutView 同步到 html 上的 backend-dark 类 */
-:root.backend-dark {
+/* 应用入口同步暗色类，三个页面模块共用同一配色 */
+:root.app-dark {
+  color-scheme: dark;
   --backend-surface: #1c1c1f;
   --backend-sidebar-surface: #242428;
   --backend-border: #38383d;
@@ -24,6 +29,9 @@
   --backend-active-text: #f7f7f8;
   --backend-close: #8a8a92;
   --backend-close-hover: #a4a4ac;
+  --status-success: #4bd6c3;
+  --status-warning: #ffd166;
+  --status-danger: #ff718b;
 }
 
 /* 把 Element Plus 的 --el-* 变量映射到后台主题的 --backend-* 变量，
@@ -82,7 +90,7 @@
   --el-button-active-border-color: var(--backend-text);
 }
 
-.backend-shell .el-button--primary:not(.is-link) {
+:is(.backend-shell, .home-shell, .problem-shell) .el-button--primary:not(.is-link) {
   --el-button-text-color: var(--backend-surface);
   --el-button-bg-color: var(--backend-text);
   --el-button-border-color: var(--backend-text);

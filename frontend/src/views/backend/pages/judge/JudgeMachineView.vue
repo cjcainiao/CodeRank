@@ -458,7 +458,7 @@ onMounted(loadMachines)
 }
 
 .judge-machine__limits {
-  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  font-family: var(--code-font-family);
   font-size: 12px;
 }
 

@@ -91,7 +91,7 @@
               class="color-picker__swatch"
               :class="{ 'color-picker__swatch--active': form.color === color }"
               type="button"
-              :style="{ background: color }"
+              :style="{ background: color, color: contrastTextColor(color) }"
               :aria-label="`使用颜色 ${color}`"
               :title="color"
               @click="form.color = color"
@@ -122,6 +122,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { Check, X } from '@lucide/vue'
+import { contrastTextColor } from '@/utils/colorUtil'
 import {
   createTag,
   deleteTag,
@@ -186,7 +187,7 @@ const sortOrder = ref<'asc' | 'desc' | ''>('')
 // 有自定义颜色时按色值渲染标签，无颜色时走默认样式
 function tagStyle(color: string | null): Record<string, string> | undefined {
   if (!color) return undefined
-  return { color: '#fff', borderColor: color }
+  return { color: contrastTextColor(color), borderColor: color }
 }
 
 // 表头排序变化后回到第一页重新查询
@@ -409,7 +410,7 @@ onBeforeUnmount(() => {
   transform: scale(1.12);
 }
 
-/* 未选中时只显示描边，选中时用白色对勾标记，不加外框 */
+/* 未选中时只显示描边，选中时用对比色对勾标记，不加外框 */
 .color-picker__swatch--none {
   background: var(--backend-surface);
   box-shadow: inset 0 0 0 1px var(--backend-border);
