@@ -2,7 +2,10 @@ package com.coderank.entity.vo.question;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -11,6 +14,9 @@ import java.time.LocalDateTime;
  * 标签视图对象。
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TagVO implements Serializable {
 
     private static final long serialVersionUID = 1L;

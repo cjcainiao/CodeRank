@@ -96,7 +96,8 @@ create table if not exists question_code_template
     id              bigint primary key,                                   -- 主键，雪花算法生成
     question_id     bigint                 not null,                      -- 所属题目
     language        smallint               not null,                      -- 语言：1 Java，2 C++，3 Python，4 Go，5 JavaScript
-    template        text                   not null,                      -- 初始代码
+    template        text                   not null,                      -- 初始代码，前端编辑器回显，用户在此编写
+    stub_template   text,                                                 -- 桩程序，含 {{code}} 占位符，拼接完整程序用
     create_time     timestamp    default current_timestamp not null,      -- 创建时间
     update_time     timestamp    default current_timestamp not null       -- 更新时间
 );
@@ -156,6 +157,7 @@ create table if not exists judge_machine
     last_check_time timestamp,                                            -- 最后探测时间
     last_check_ok   smallint     default 0 not null,                      -- 最后探测结果：0 失败，1 成功
     remark          varchar(255),                                         -- 备注
+    metrics_endpoint varchar(255),                                        -- 指标地址，未开启监控时为空
     create_time     timestamp    default current_timestamp not null,      -- 创建时间
     update_time     timestamp    default current_timestamp not null       -- 更新时间
 );
@@ -165,3 +167,28 @@ create unique index if not exists uk_judge_machine_name on judge_machine (name);
 
 -- 按状态筛选可用机器
 create index if not exists idx_judge_machine_status on judge_machine (status);
+
+-- 代码提交记录表
+create table if not exists submission
+(
+    id              bigint primary key,                                   -- 主键，雪花算法生成
+    question_id     bigint                 not null,                      -- 所属题目
+    language        varchar(20)            not null,                      -- 语言标识：java、cpp、python、go、javascript
+    source_code     text                   not null,                      -- 提交代码
+    status          smallint     default 0 not null,                      -- 判题结果：0 等待，1 通过，2 答案错误，3 超时，4 内存超限，5 运行错误，6 编译错误，7 系统错误，8 评测中
+    passed_count    integer      default 0 not null,                      -- 通过测试点数
+    total_count     integer      default 0 not null,                      -- 测试点总数
+    time_used       integer      default 0 not null,                      -- 最大耗时，毫秒
+    memory_used     bigint       default 0 not null,                      -- 最大内存，千字节
+    error_message   text,                                                 -- 编译或运行错误信息
+    case_results    jsonb        default '[]' not null,                   -- 各测试点详情，[{"caseNo":1,"passed":true,"time":12}]
+    judge_machine_id bigint,                                              -- 实际使用的评测机
+    create_time     timestamp    default current_timestamp not null,      -- 创建时间
+    update_time     timestamp    default current_timestamp not null       -- 更新时间
+);
+
+-- 按题目查提交记录，同时支撑按时间倒序分页
+create index if not exists idx_submission_question on submission (question_id, create_time desc);
+
+-- 各测试点结果为 jsonb，供按结果检索
+create index if not exists idx_submission_case_results on submission using gin (case_results);

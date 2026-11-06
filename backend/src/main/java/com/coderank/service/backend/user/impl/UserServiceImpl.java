@@ -1,5 +1,6 @@
 package com.coderank.service.backend.user.impl;
 
+import com.coderank.common.enums.ResultCodeEnum;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.coderank.common.result.PageResult;
@@ -11,7 +12,6 @@ import com.coderank.entity.vo.user.UserVO;
 import com.coderank.exception.BusinessException;
 import com.coderank.mapper.backend.user.UserMapper;
 import com.coderank.service.backend.user.UserService;
-import org.springframework.beans.BeanUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -87,7 +87,7 @@ public class UserServiceImpl implements UserService {
     public UserVO getUserById(Long id) {
         User user = userMapper.selectById(id);
         if (user == null) {
-            throw new BusinessException(404, "用户不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "用户不存在");
         }
         return toVO(user);
     }
@@ -96,18 +96,24 @@ public class UserServiceImpl implements UserService {
     @Override
     public Long createUser(UserCreateDTO createDTO) {
         if (existsUsername(createDTO.getUsername())) {
-            throw new BusinessException(409, "登录账号已存在");
+            throw new BusinessException(ResultCodeEnum.CONFLICT, "登录账号已存在");
         }
         if (StringUtils.hasText(createDTO.getEmail()) && existsEmail(createDTO.getEmail())) {
-            throw new BusinessException(409, "邮箱已被使用");
+            throw new BusinessException(ResultCodeEnum.CONFLICT, "邮箱已被使用");
         }
 
-        User user = new User();
-        BeanUtils.copyProperties(createDTO, user);
-        user.setPassword(passwordEncoder.encode(createDTO.getPassword()));
-        user.setGender(createDTO.getGender() == null ? GENDER_UNKNOWN : createDTO.getGender());
-        user.setRole(createDTO.getRole() == null ? ROLE_USER : createDTO.getRole());
-        user.setStatus(STATUS_NORMAL);
+        User user = User.builder()
+                .username(createDTO.getUsername())
+                .password(passwordEncoder.encode(createDTO.getPassword()))
+                .nickname(createDTO.getNickname())
+                .email(createDTO.getEmail())
+                .phone(createDTO.getPhone())
+                .avatar(createDTO.getAvatar())
+                .signature(createDTO.getSignature())
+                .gender(createDTO.getGender() == null ? GENDER_UNKNOWN : createDTO.getGender())
+                .role(createDTO.getRole() == null ? ROLE_USER : createDTO.getRole())
+                .status(STATUS_NORMAL)
+                .build();
 
         userMapper.insert(user);
         return user.getId();
@@ -118,14 +124,23 @@ public class UserServiceImpl implements UserService {
     public void updateUser(UserUpdateDTO updateDTO) {
         User existing = userMapper.selectById(updateDTO.getId());
         if (existing == null) {
-            throw new BusinessException(404, "用户不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "用户不存在");
         }
         if (StringUtils.hasText(updateDTO.getEmail()) && existsEmailExceptId(updateDTO.getEmail(), updateDTO.getId())) {
-            throw new BusinessException(409, "邮箱已被使用");
+            throw new BusinessException(ResultCodeEnum.CONFLICT, "邮箱已被使用");
         }
 
-        User user = new User();
-        BeanUtils.copyProperties(updateDTO, user);
+        User user = User.builder()
+                .id(updateDTO.getId())
+                .nickname(updateDTO.getNickname())
+                .email(updateDTO.getEmail())
+                .phone(updateDTO.getPhone())
+                .avatar(updateDTO.getAvatar())
+                .signature(updateDTO.getSignature())
+                .gender(updateDTO.getGender())
+                .role(updateDTO.getRole())
+                .status(updateDTO.getStatus())
+                .build();
         userMapper.updateById(user);
     }
 
@@ -133,7 +148,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Long id) {
         if (userMapper.selectById(id) == null) {
-            throw new BusinessException(404, "用户不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "用户不存在");
         }
         userMapper.deleteById(id);
     }
@@ -148,17 +163,29 @@ public class UserServiceImpl implements UserService {
         return userMapper.exists(new LambdaQueryWrapper<User>().eq(User::getEmail, email));
     }
 
-    // 邮箱是否被除指定用户外的其他人使用
+    // 邮箱是否被除指定用户外的记录占用
     private boolean existsEmailExceptId(String email, Long id) {
         return userMapper.exists(new LambdaQueryWrapper<User>()
                 .eq(User::getEmail, email)
                 .ne(User::getId, id));
     }
 
-    // 实体转视图对象，剔除密码
+    // 实体转视图对象，密码不在 VO 中，自然剔除
     private UserVO toVO(User user) {
-        UserVO vo = new UserVO();
-        BeanUtils.copyProperties(user, vo);
-        return vo;
+        return UserVO.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .nickname(user.getNickname())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .avatar(user.getAvatar())
+                .signature(user.getSignature())
+                .gender(user.getGender())
+                .role(user.getRole())
+                .status(user.getStatus())
+                .lastLoginTime(user.getLastLoginTime())
+                .createTime(user.getCreateTime())
+                .updateTime(user.getUpdateTime())
+                .build();
     }
 }

@@ -1,5 +1,6 @@
 package com.coderank.service.backend.question.impl;
 
+import com.coderank.common.enums.ResultCodeEnum;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.coderank.entity.dto.question.QuestionTestCaseCreateDTO;
 import com.coderank.entity.dto.question.QuestionTestCaseUpdateDTO;
@@ -12,7 +13,6 @@ import com.coderank.mapper.backend.question.QuestionTestCaseMapper;
 import com.coderank.service.backend.question.QuestionTestCaseService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -48,7 +48,7 @@ public class QuestionTestCaseServiceImpl implements QuestionTestCaseService {
     @Override
     public List<QuestionTestCaseVO> listByQuestionId(Long questionId) {
         if (questionMapper.selectById(questionId) == null) {
-            throw new BusinessException(404, "题目不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "题目不存在");
         }
         List<QuestionTestCase> testCases = testCaseMapper.selectList(
                 new LambdaQueryWrapper<QuestionTestCase>()
@@ -63,7 +63,7 @@ public class QuestionTestCaseServiceImpl implements QuestionTestCaseService {
     public QuestionTestCaseVO getTestCaseById(Long id) {
         QuestionTestCase testCase = testCaseMapper.selectById(id);
         if (testCase == null) {
-            throw new BusinessException(404, "测试用例不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "测试用例不存在");
         }
         return toVO(testCase);
     }
@@ -73,17 +73,17 @@ public class QuestionTestCaseServiceImpl implements QuestionTestCaseService {
     public Long createTestCase(QuestionTestCaseCreateDTO createDTO) {
         Question question = questionMapper.selectById(createDTO.getQuestionId());
         if (question == null) {
-            throw new BusinessException(404, "题目不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "题目不存在");
         }
 
-        QuestionTestCase testCase = new QuestionTestCase();
-        BeanUtils.copyProperties(createDTO, testCase);
+        QuestionTestCase testCase = QuestionTestCase.builder()
+                .questionId(createDTO.getQuestionId())
+                .visible(createDTO.getVisible() == null ? VISIBLE : createDTO.getVisible())
+                .sortOrder(createDTO.getSortOrder() == null ? DEFAULT_SORT_ORDER : createDTO.getSortOrder())
+                .build();
         fillCaseContent(testCase, question.getJudgeMode(),
                 createDTO.getArgs(), createDTO.getExpected(),
                 createDTO.getInputData(), createDTO.getExpectedOut());
-        testCase.setVisible(createDTO.getVisible() == null ? VISIBLE : createDTO.getVisible());
-        testCase.setSortOrder(
-                createDTO.getSortOrder() == null ? DEFAULT_SORT_ORDER : createDTO.getSortOrder());
 
         testCaseMapper.insert(testCase);
         return testCase.getId();
@@ -94,15 +94,18 @@ public class QuestionTestCaseServiceImpl implements QuestionTestCaseService {
     public void updateTestCase(QuestionTestCaseUpdateDTO updateDTO) {
         QuestionTestCase existing = testCaseMapper.selectById(updateDTO.getId());
         if (existing == null) {
-            throw new BusinessException(404, "测试用例不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "测试用例不存在");
         }
         Question question = questionMapper.selectById(existing.getQuestionId());
         if (question == null) {
-            throw new BusinessException(404, "题目不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "题目不存在");
         }
 
-        QuestionTestCase testCase = new QuestionTestCase();
-        BeanUtils.copyProperties(updateDTO, testCase);
+        QuestionTestCase testCase = QuestionTestCase.builder()
+                .id(updateDTO.getId())
+                .visible(updateDTO.getVisible())
+                .sortOrder(updateDTO.getSortOrder())
+                .build();
         // 未传的字段保持原值，传了才校验并覆盖
         if (updateDTO.getArgs() != null || updateDTO.getExpected() != null
                 || updateDTO.getInputData() != null || updateDTO.getExpectedOut() != null) {
@@ -117,7 +120,7 @@ public class QuestionTestCaseServiceImpl implements QuestionTestCaseService {
     @Override
     public void deleteTestCase(Long id) {
         if (testCaseMapper.selectById(id) == null) {
-            throw new BusinessException(404, "测试用例不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "测试用例不存在");
         }
         testCaseMapper.deleteById(id);
     }
@@ -128,7 +131,7 @@ public class QuestionTestCaseServiceImpl implements QuestionTestCaseService {
                                  String inputData, String expectedOut) {
         if (judgeMode != null && judgeMode == JUDGE_MODE_CORE) {
             if (!StringUtils.hasText(args) || !StringUtils.hasText(expected)) {
-                throw new BusinessException(400, "核心代码模式须填写函数入参与期望返回值");
+                throw new BusinessException(ResultCodeEnum.BAD_REQUEST, "核心代码模式须填写函数入参与期望返回值");
             }
             testCase.setArgs(resolveArgs(args));
             testCase.setExpected(resolveExpected(expected));
@@ -138,7 +141,7 @@ public class QuestionTestCaseServiceImpl implements QuestionTestCaseService {
         }
 
         if (!StringUtils.hasText(inputData) || !StringUtils.hasText(expectedOut)) {
-            throw new BusinessException(400, "标准输入输出模式须填写标准输入与标准输出");
+            throw new BusinessException(ResultCodeEnum.BAD_REQUEST, "标准输入输出模式须填写标准输入与标准输出");
         }
         testCase.setArgs(null);
         testCase.setExpected(null);
@@ -150,10 +153,10 @@ public class QuestionTestCaseServiceImpl implements QuestionTestCaseService {
     private String resolveArgs(String args) {
         try {
             if (!objectMapper.readTree(args).isArray()) {
-                throw new BusinessException(400, "函数入参须为 JSON 数组");
+                throw new BusinessException(ResultCodeEnum.BAD_REQUEST, "函数入参须为 JSON 数组");
             }
         } catch (JsonProcessingException e) {
-            throw new BusinessException(400, "函数入参不是合法的 JSON");
+            throw new BusinessException(ResultCodeEnum.BAD_REQUEST, "函数入参不是合法的 JSON");
         }
         return args;
     }
@@ -163,15 +166,24 @@ public class QuestionTestCaseServiceImpl implements QuestionTestCaseService {
         try {
             objectMapper.readTree(expected);
         } catch (JsonProcessingException e) {
-            throw new BusinessException(400, "期望返回值不是合法的 JSON");
+            throw new BusinessException(ResultCodeEnum.BAD_REQUEST, "期望返回值不是合法的 JSON");
         }
         return expected;
     }
 
     // 实体转视图对象
     private QuestionTestCaseVO toVO(QuestionTestCase testCase) {
-        QuestionTestCaseVO vo = new QuestionTestCaseVO();
-        BeanUtils.copyProperties(testCase, vo);
-        return vo;
+        return QuestionTestCaseVO.builder()
+                .id(testCase.getId())
+                .questionId(testCase.getQuestionId())
+                .args(testCase.getArgs())
+                .expected(testCase.getExpected())
+                .inputData(testCase.getInputData())
+                .expectedOut(testCase.getExpectedOut())
+                .visible(testCase.getVisible())
+                .sortOrder(testCase.getSortOrder())
+                .createTime(testCase.getCreateTime())
+                .updateTime(testCase.getUpdateTime())
+                .build();
     }
 }

@@ -1,5 +1,6 @@
 package com.coderank.exception;
 
+import com.coderank.common.enums.ResultCodeEnum;
 import lombok.Getter;
 
 /**
@@ -10,29 +11,26 @@ public class BusinessException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    /** 默认业务错误码 */
-    private static final int DEFAULT_CODE = 500;
-
     /** 业务错误码 */
     private final int code;
 
     public BusinessException(String msg) {
         super(msg);
-        this.code = DEFAULT_CODE;
+        this.code = ResultCodeEnum.BUSINESS_ERROR.getCode();
     }
 
-    public BusinessException(int code, String msg) {
+    public BusinessException(ResultCodeEnum resultCode) {
+        super(resultCode.getMsg());
+        this.code = resultCode.getCode();
+    }
+
+    public BusinessException(ResultCodeEnum resultCode, String msg) {
         super(msg);
-        this.code = code;
+        this.code = resultCode.getCode();
     }
 
-    public BusinessException(String msg, Throwable cause) {
+    public BusinessException(ResultCodeEnum resultCode, String msg, Throwable cause) {
         super(msg, cause);
-        this.code = DEFAULT_CODE;
-    }
-
-    public BusinessException(int code, String msg, Throwable cause) {
-        super(msg, cause);
-        this.code = code;
+        this.code = resultCode.getCode();
     }
 }

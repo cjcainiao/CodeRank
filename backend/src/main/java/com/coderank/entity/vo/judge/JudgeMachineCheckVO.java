@@ -1,6 +1,9 @@
 package com.coderank.entity.vo.judge;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
@@ -8,6 +11,9 @@ import java.io.Serializable;
  * 评测机探测结果。
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class JudgeMachineCheckVO implements Serializable {
 
     private static final long serialVersionUID = 1L;

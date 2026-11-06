@@ -2,7 +2,10 @@ package com.coderank.entity.vo.question;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
@@ -11,6 +14,9 @@ import java.util.List;
  * 首页题目详情。
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class QuestionDetailVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -64,10 +70,16 @@ public class QuestionDetailVO implements Serializable {
     /** 各语言初始代码 */
     private List<CodeTemplate> codeTemplates;
 
+    /** 测试运行可快捷填入的用例 */
+    private List<TestCaseSample> testCases;
+
     /**
      * 语言初始代码。
      */
     @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class CodeTemplate implements Serializable {
 
         private static final long serialVersionUID = 1L;
@@ -77,5 +89,26 @@ public class QuestionDetailVO implements Serializable {
 
         /** 初始代码 */
         private String template;
+    }
+
+    /**
+     * 测试运行用的快捷用例。
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TestCaseSample implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+
+        /** 用例编号，从 1 开始 */
+        private Integer caseNo;
+
+        /** 标准输入，核心代码模式为 args JSON */
+        private String input;
+
+        /** 期望输出，仅展示型用例返回 */
+        private String expected;
     }
 }

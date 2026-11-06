@@ -2,7 +2,10 @@ package com.coderank.entity.vo.question;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
@@ -11,6 +14,9 @@ import java.util.List;
  * 首页题库列表项。
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class QuestionBankItemVO implements Serializable {
 
     private static final long serialVersionUID = 1L;

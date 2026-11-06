@@ -3,7 +3,7 @@
   <div class="code-template">
     <header class="code-template__header">
       <span class="code-template__hint">
-        为每种语言维护一份初始代码，用户进入答题时自动填入编辑器。
+        初始代码回显到编辑器；桩程序里把用户代码的插入位置写成左右各两个花括号包住 code，评测时拼成完整程序。
       </span>
       <el-button type="primary" :icon="Plus" @click="openCreate">新增语言</el-button>
     </header>
@@ -12,9 +12,15 @@
       <el-table-column label="语言" width="120">
         <template #default="{ row }">{{ languageLabel(row.language) }}</template>
       </el-table-column>
-      <el-table-column label="初始代码" min-width="300">
+      <el-table-column label="初始代码" min-width="260">
         <template #default="{ row }">
           <pre class="code-template__preview">{{ row.template }}</pre>
+        </template>
+      </el-table-column>
+      <el-table-column label="桩程序" min-width="260">
+        <template #default="{ row }">
+          <pre v-if="row.stubTemplate" class="code-template__preview">{{ row.stubTemplate }}</pre>
+          <span v-else class="code-template__empty">未配置</span>
         </template>
       </el-table-column>
       <el-table-column v-if="!draftMode" label="更新时间" width="170">
@@ -47,9 +53,19 @@
           <el-input
             v-model="form.template"
             type="textarea"
-            :rows="14"
+            :rows="10"
             resize="vertical"
-            placeholder="请输入该语言的初始代码"
+            placeholder="用户打开题目时看到的代码，函数框架等"
+            class="code-template__editor"
+          />
+        </el-form-item>
+        <el-form-item label="桩程序" prop="stubTemplate">
+          <el-input
+            v-model="form.stubTemplate"
+            type="textarea"
+            :rows="12"
+            resize="vertical"
+            :placeholder="STUB_PLACEHOLDER_HINT"
             class="code-template__editor"
           />
         </el-form-item>
@@ -84,10 +100,14 @@ const LANGUAGE_OPTIONS = [
   { value: 5, label: 'JavaScript' },
 ] as const
 
+// 桩程序占位符说明，用变量拼接避免模板里出现双花括号
+const STUB_PLACEHOLDER_HINT = `完整程序，用 ${'{{'}code${'}}'} 标记用户代码插入位置`
+
 // 草稿模板，题目尚未保存时暂存在前端
 export interface DraftCodeTemplate {
   language: number
   template: string
+  stubTemplate?: string
 }
 
 // 列表行，草稿态与接口态共用
@@ -95,6 +115,7 @@ interface TemplateRow {
   id: string
   language: number
   template: string
+  stubTemplate?: string | null
   updateTime?: string
 }
 
@@ -128,20 +149,23 @@ const displayRows = computed<TemplateRow[]>(() => {
       id: `draft-${item.language}`,
       language: item.language,
       template: item.template,
+      stubTemplate: item.stubTemplate,
     }))
   }
   return remoteRows.value.map((item) => ({
     id: item.id,
     language: item.language,
     template: item.template,
+    stubTemplate: item.stubTemplate,
     updateTime: item.updateTime,
   }))
 })
 
 // 表单字段
-const form = reactive<{ language: number; template: string }>({
+const form = reactive<{ language: number; template: string; stubTemplate: string }>({
   language: 1,
   template: '',
+  stubTemplate: '',
 })
 
 const rules: FormRules = {
@@ -175,6 +199,7 @@ watch(() => props.questionId, loadTemplates, { immediate: true })
 function resetForm() {
   form.language = 1
   form.template = ''
+  form.stubTemplate = ''
   formRef.value?.clearValidate()
 }
 
@@ -205,6 +230,7 @@ function openEdit(row: TemplateRow) {
   resetForm()
   form.language = row.language
   form.template = row.template
+  form.stubTemplate = row.stubTemplate ?? ''
   dialogVisible.value = true
 }
 
@@ -231,9 +257,10 @@ async function submit() {
 function submitDraft() {
   // 先剔除正在编辑的那条旧记录，再按语言写入并保持有序
   const rest = drafts.value.filter((item) => item.language !== editingLanguage.value)
-  drafts.value = [...rest, { language: form.language, template: form.template }].sort(
-    (a, b) => a.language - b.language,
-  )
+  drafts.value = [
+    ...rest,
+    { language: form.language, template: form.template, stubTemplate: form.stubTemplate },
+  ].sort((a, b) => a.language - b.language)
   ElMessage.success(editingLanguage.value === null ? '已添加' : '已更新')
 }
 
@@ -244,6 +271,7 @@ async function submitRemote() {
       questionId: props.questionId,
       language: form.language,
       template: form.template,
+      stubTemplate: form.stubTemplate || undefined,
     })
     ElMessage.success('新增成功')
   } else {
@@ -251,6 +279,7 @@ async function submitRemote() {
       id: editingId.value,
       language: form.language,
       template: form.template,
+      stubTemplate: form.stubTemplate,
     })
     ElMessage.success('修改成功')
   }
@@ -312,6 +341,11 @@ async function removeTemplate(row: TemplateRow) {
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.code-template__empty {
+  color: var(--backend-muted);
+  font-size: 12px;
 }
 
 /* 代码编辑用等宽字体，避免缩进错位 */

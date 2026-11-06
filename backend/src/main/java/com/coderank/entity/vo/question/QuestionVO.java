@@ -2,7 +2,10 @@ package com.coderank.entity.vo.question;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -12,6 +15,9 @@ import java.util.List;
  * 题目视图对象。
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class QuestionVO implements Serializable {
 
     private static final long serialVersionUID = 1L;

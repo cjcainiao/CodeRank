@@ -1,0 +1,32 @@
+import sys, json
+
+class ListNode:
+    def __init__(self, x):
+        self.val = x
+        self.next = None
+
+{{code}}
+
+def main():
+    raw = sys.stdin.read().strip()
+    nums = json.loads(raw) if raw else []
+
+    head = None
+    tail = None
+    for v in nums:
+        node = ListNode(v)
+        if head is None:
+            head = node
+            tail = node
+        else:
+            tail.next = node
+            tail = node
+
+    solution = Solution()
+    ans = solution.printListFromTailToHead(head)
+    if ans is None:
+        ans = []
+    print(json.dumps(list(ans), separators=(",", ":")))
+
+if __name__ == "__main__":
+    main()

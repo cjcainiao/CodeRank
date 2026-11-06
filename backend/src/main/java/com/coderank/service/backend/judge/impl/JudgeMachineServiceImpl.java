@@ -1,5 +1,6 @@
 package com.coderank.service.backend.judge.impl;
 
+import com.coderank.common.enums.ResultCodeEnum;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.coderank.common.result.PageResult;
@@ -14,12 +15,10 @@ import com.coderank.mapper.backend.judge.JudgeMachineMapper;
 import com.coderank.service.backend.judge.JudgeMachineService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -34,10 +33,9 @@ import java.util.List;
 /**
  * 后台评测机管理业务实现。
  */
+@Slf4j
 @Service
 public class JudgeMachineServiceImpl implements JudgeMachineService {
-
-    private static final Logger log = LoggerFactory.getLogger(JudgeMachineServiceImpl.class);
 
     /** 分页每页最大条数 */
     private static final long MAX_PAGE_SIZE = 100L;
@@ -131,7 +129,7 @@ public class JudgeMachineServiceImpl implements JudgeMachineService {
     public JudgeMachineVO getMachineById(Long id) {
         JudgeMachine machine = judgeMachineMapper.selectById(id);
         if (machine == null) {
-            throw new BusinessException(404, "评测机不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "评测机不存在");
         }
         return toVO(machine);
     }
@@ -140,23 +138,28 @@ public class JudgeMachineServiceImpl implements JudgeMachineService {
     @Override
     public Long createMachine(JudgeMachineCreateDTO createDTO) {
         if (existsName(createDTO.getName())) {
-            throw new BusinessException(409, "机器名称已存在");
+            throw new BusinessException(ResultCodeEnum.CONFLICT, "机器名称已存在");
         }
 
-        JudgeMachine machine = new JudgeMachine();
-        BeanUtils.copyProperties(createDTO, machine);
-        machine.setStatus(createDTO.getStatus() == null ? DEFAULT_STATUS : createDTO.getStatus());
-        machine.setWeight(createDTO.getWeight() == null ? DEFAULT_WEIGHT : createDTO.getWeight());
-        machine.setMaxParallel(createDTO.getMaxParallel() == null
-                ? DEFAULT_MAX_PARALLEL : createDTO.getMaxParallel());
-        machine.setCpuLimit(createDTO.getCpuLimit() == null ? DEFAULT_CPU_LIMIT : createDTO.getCpuLimit());
-        machine.setClockLimit(createDTO.getClockLimit() == null
-                ? DEFAULT_CLOCK_LIMIT : createDTO.getClockLimit());
-        machine.setMemoryLimit(createDTO.getMemoryLimit() == null
-                ? DEFAULT_MEMORY_LIMIT : createDTO.getMemoryLimit());
-        machine.setProcLimit(createDTO.getProcLimit() == null ? DEFAULT_PROC_LIMIT : createDTO.getProcLimit());
-        machine.setOutputLimit(createDTO.getOutputLimit() == null
-                ? DEFAULT_OUTPUT_LIMIT : createDTO.getOutputLimit());
+        JudgeMachine machine = JudgeMachine.builder()
+                .name(createDTO.getName())
+                .endpoint(createDTO.getEndpoint())
+                .authToken(createDTO.getAuthToken())
+                .status(createDTO.getStatus() == null ? DEFAULT_STATUS : createDTO.getStatus())
+                .weight(createDTO.getWeight() == null ? DEFAULT_WEIGHT : createDTO.getWeight())
+                .maxParallel(createDTO.getMaxParallel() == null
+                        ? DEFAULT_MAX_PARALLEL : createDTO.getMaxParallel())
+                .cpuLimit(createDTO.getCpuLimit() == null ? DEFAULT_CPU_LIMIT : createDTO.getCpuLimit())
+                .clockLimit(createDTO.getClockLimit() == null
+                        ? DEFAULT_CLOCK_LIMIT : createDTO.getClockLimit())
+                .memoryLimit(createDTO.getMemoryLimit() == null
+                        ? DEFAULT_MEMORY_LIMIT : createDTO.getMemoryLimit())
+                .procLimit(createDTO.getProcLimit() == null ? DEFAULT_PROC_LIMIT : createDTO.getProcLimit())
+                .outputLimit(createDTO.getOutputLimit() == null
+                        ? DEFAULT_OUTPUT_LIMIT : createDTO.getOutputLimit())
+                .remark(createDTO.getRemark())
+                .metricsEndpoint(createDTO.getMetricsEndpoint())
+                .build();
 
         judgeMachineMapper.insert(machine);
         return machine.getId();
@@ -167,14 +170,28 @@ public class JudgeMachineServiceImpl implements JudgeMachineService {
     public void updateMachine(JudgeMachineUpdateDTO updateDTO) {
         JudgeMachine existing = judgeMachineMapper.selectById(updateDTO.getId());
         if (existing == null) {
-            throw new BusinessException(404, "评测机不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "评测机不存在");
         }
         if (StringUtils.hasText(updateDTO.getName()) && existsNameExceptId(updateDTO.getName(), updateDTO.getId())) {
-            throw new BusinessException(409, "机器名称已存在");
+            throw new BusinessException(ResultCodeEnum.CONFLICT, "机器名称已存在");
         }
 
-        JudgeMachine machine = new JudgeMachine();
-        BeanUtils.copyProperties(updateDTO, machine);
+        JudgeMachine machine = JudgeMachine.builder()
+                .id(updateDTO.getId())
+                .name(updateDTO.getName())
+                .endpoint(updateDTO.getEndpoint())
+                .authToken(updateDTO.getAuthToken())
+                .status(updateDTO.getStatus())
+                .weight(updateDTO.getWeight())
+                .maxParallel(updateDTO.getMaxParallel())
+                .cpuLimit(updateDTO.getCpuLimit())
+                .clockLimit(updateDTO.getClockLimit())
+                .memoryLimit(updateDTO.getMemoryLimit())
+                .procLimit(updateDTO.getProcLimit())
+                .outputLimit(updateDTO.getOutputLimit())
+                .remark(updateDTO.getRemark())
+                .metricsEndpoint(updateDTO.getMetricsEndpoint())
+                .build();
         judgeMachineMapper.updateById(machine);
     }
 
@@ -182,7 +199,7 @@ public class JudgeMachineServiceImpl implements JudgeMachineService {
     @Override
     public void deleteMachine(Long id) {
         if (judgeMachineMapper.selectById(id) == null) {
-            throw new BusinessException(404, "评测机不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "评测机不存在");
         }
         judgeMachineMapper.deleteById(id);
     }
@@ -192,7 +209,7 @@ public class JudgeMachineServiceImpl implements JudgeMachineService {
     public JudgeMachineCheckVO checkMachine(Long id) {
         JudgeMachine machine = judgeMachineMapper.selectById(id);
         if (machine == null) {
-            throw new BusinessException(404, "评测机不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "评测机不存在");
         }
         return probe(machine);
     }
@@ -207,8 +224,9 @@ public class JudgeMachineServiceImpl implements JudgeMachineService {
 
     // 单台探测并回写结果
     private JudgeMachineCheckVO probe(JudgeMachine machine) {
-        JudgeMachineCheckVO vo = new JudgeMachineCheckVO();
         long start = System.currentTimeMillis();
+        JudgeMachineCheckVO.JudgeMachineCheckVOBuilder builder = JudgeMachineCheckVO.builder();
+
         try {
             HttpGet request = new HttpGet(buildVersionUrl(machine.getEndpoint()));
             // 回调内只读取响应，状态码判断放到外层，避免异常被客户端包装后丢失原始信息
@@ -217,29 +235,28 @@ public class JudgeMachineServiceImpl implements JudgeMachineService {
                     EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8)));
 
             if (result.status() != 200) {
-                vo.setOk(false);
-                vo.setMessage("服务返回状态码 " + result.status());
+                builder.ok(false).message("服务返回状态码 " + result.status());
             } else {
                 JsonNode json = objectMapper.readTree(result.body());
-                vo.setOk(true);
-                vo.setVersion(textOrNull(json, "buildVersion"));
-                vo.setOs(textOrNull(json, "os"));
-                vo.setPlatform(textOrNull(json, "platform"));
+                builder.ok(true)
+                        .version(textOrNull(json, "buildVersion"))
+                        .os(textOrNull(json, "os"))
+                        .platform(textOrNull(json, "platform"));
             }
         } catch (Exception e) {
             // 连接失败属于预期内的探测结果，只记简要信息，不打印堆栈
             log.warn("评测机探测失败，id={}，endpoint={}，原因={}",
                     machine.getId(), machine.getEndpoint(), describeError(e));
-            vo.setOk(false);
-            vo.setMessage(describeError(e));
+            builder.ok(false).message(describeError(e));
         }
 
-        vo.setElapsed(System.currentTimeMillis() - start);
+        JudgeMachineCheckVO vo = builder.elapsed(System.currentTimeMillis() - start).build();
         // 探测结果落库，便于列表直接展示在线状态
-        JudgeMachine update = new JudgeMachine();
-        update.setId(machine.getId());
-        update.setLastCheckTime(LocalDateTime.now());
-        update.setLastCheckOk(Boolean.TRUE.equals(vo.getOk()) ? CHECK_OK : CHECK_FAILED);
+        JudgeMachine update = JudgeMachine.builder()
+                .id(machine.getId())
+                .lastCheckTime(LocalDateTime.now())
+                .lastCheckOk(Boolean.TRUE.equals(vo.getOk()) ? CHECK_OK : CHECK_FAILED)
+                .build();
         judgeMachineMapper.updateById(update);
 
         return vo;
@@ -291,10 +308,26 @@ public class JudgeMachineServiceImpl implements JudgeMachineService {
 
     // 实体转视图对象，令牌只暴露是否已配置
     private JudgeMachineVO toVO(JudgeMachine machine) {
-        JudgeMachineVO vo = new JudgeMachineVO();
-        BeanUtils.copyProperties(machine, vo);
-        vo.setHasToken(StringUtils.hasText(machine.getAuthToken()));
-        return vo;
+        return JudgeMachineVO.builder()
+                .id(machine.getId())
+                .name(machine.getName())
+                .endpoint(machine.getEndpoint())
+                .metricsEndpoint(machine.getMetricsEndpoint())
+                .hasToken(StringUtils.hasText(machine.getAuthToken()))
+                .status(machine.getStatus())
+                .weight(machine.getWeight())
+                .maxParallel(machine.getMaxParallel())
+                .cpuLimit(machine.getCpuLimit())
+                .clockLimit(machine.getClockLimit())
+                .memoryLimit(machine.getMemoryLimit())
+                .procLimit(machine.getProcLimit())
+                .outputLimit(machine.getOutputLimit())
+                .lastCheckTime(machine.getLastCheckTime())
+                .lastCheckOk(machine.getLastCheckOk())
+                .remark(machine.getRemark())
+                .createTime(machine.getCreateTime())
+                .updateTime(machine.getUpdateTime())
+                .build();
     }
 
     /**

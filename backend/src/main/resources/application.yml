@@ -43,3 +43,20 @@ http-client:
     idle-evict: 5m               # 空闲连接回收时间
     keep-alive: 10m              # 连接保活时间
     validate-after-inactivity: 1s  # 空闲超过该时长后使用前校验
+
+# 评测配置
+judge:
+  compile:                     # 编译阶段：编译器比用户程序更吃资源
+    cpu-limit: 20s             # CPU 时间上限
+    clock-limit: 30s           # 墙钟时间上限
+    memory-limit: 1073741824   # 内存上限，字节
+    proc-limit: 256            # 进程数上限
+  run:                         # 运行阶段兜底：题目未配置时使用
+    cpu-limit: 5s              # CPU 时间上限
+    clock-limit: 10s           # 墙钟时间上限
+    memory-limit: 268435456    # 内存上限，字节
+    proc-limit: 64             # 进程数上限
+    output-limit: 1048576      # 输出上限，字节
+    clock-factor: 2            # 墙钟相对 CPU 的放大倍数，给启动开销留余量
+  sandbox:
+    path: /usr/local/bin:/usr/bin:/bin  # 容器内可执行文件搜索路径

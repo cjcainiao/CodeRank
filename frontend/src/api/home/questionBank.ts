@@ -45,6 +45,13 @@ export interface CodeTemplate {
   template: string
 }
 
+// 测试运行可快捷填入的用例
+export interface TestCaseSample {
+  caseNo: number
+  input: string | null
+  expected: string | null
+}
+
 // 题目详情
 export interface QuestionDetailVO {
   id: string
@@ -63,6 +70,7 @@ export interface QuestionDetailVO {
   acceptedCount: number
   tags: string[] | null
   codeTemplates: CodeTemplate[] | null
+  testCases: TestCaseSample[] | null
 }
 
 // 分页查询已发布的题目

@@ -85,6 +85,9 @@
           <el-menu-item index="/backend/judge/status">
             <Activity class="backend-sidebar__item-icon" aria-hidden="true" />运行状态
           </el-menu-item>
+          <el-menu-item index="/backend/judge/test">
+            <FlaskConical class="backend-sidebar__item-icon" aria-hidden="true" />代码测试
+          </el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="users">
           <template #title>
@@ -125,6 +128,7 @@ import {
   ChevronDown,
   Cpu,
   FileText,
+  FlaskConical,
   History,
   LayoutDashboard,
   List,
@@ -154,6 +158,7 @@ const activeMenuPath = computed(() => {
   if (route.name === 'backend-tags') return '/backend/tags'
   if (route.name === 'backend-judge-machines') return '/backend/judge/machines'
   if (route.name === 'backend-judge-status') return '/backend/judge/status'
+  if (route.name === 'backend-judge-test') return '/backend/judge/test'
   if (route.name === 'backend-submissions') return '/backend/submissions'
   if (route.name === 'backend-users') return '/backend/users'
   if (route.name === 'backend-settings') return '/backend/settings'
@@ -171,7 +176,8 @@ const initialOpenGroups = (() => {
   )
     return ['questions']
   if (name === 'backend-submissions') return ['submissions']
-  if (name === 'backend-judge-machines' || name === 'backend-judge-status') return ['judge']
+  if (name === 'backend-judge-machines' || name === 'backend-judge-status' || name === 'backend-judge-test')
+    return ['judge']
   if (name === 'backend-users') return ['users']
   if (name === 'backend-settings') return ['system-settings']
   return []
@@ -207,7 +213,7 @@ watch(
     if (name === 'backend-submissions') {
       groupMenu.value?.open('submissions')
     }
-    if (name === 'backend-judge-machines' || name === 'backend-judge-status') {
+    if (name === 'backend-judge-machines' || name === 'backend-judge-status' || name === 'backend-judge-test') {
       groupMenu.value?.open('judge')
     }
     if (name === 'backend-users') {

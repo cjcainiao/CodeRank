@@ -22,7 +22,10 @@ public class QuestionCodeTemplateCreateDTO {
     @Max(value = 5, message = "语言取值须为 1 到 5")
     private Integer language;
 
-    /** 初始代码 */
+    /** 初始代码，前端编辑器回显，用户在此编写 */
     @NotBlank(message = "初始代码不能为空")
     private String template;
+
+    /** 桩程序，含 {{code}} 占位符，与用户代码拼接成完整程序 */
+    private String stubTemplate;
 }

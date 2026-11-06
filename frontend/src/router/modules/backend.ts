@@ -87,6 +87,16 @@ const backendRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'judge/test',
+        name: 'backend-judge-test',
+        component: () => import('@/views/backend/pages/judge/JudgeTestView.vue'),
+        meta: {
+          backendTitle: '代码测试',
+          requiresAuth: true,
+          roles: ['admin'],
+        },
+      },
+      {
         path: 'users',
         name: 'backend-users',
         component: () => import('@/views/backend/pages/users/UserListView.vue'),

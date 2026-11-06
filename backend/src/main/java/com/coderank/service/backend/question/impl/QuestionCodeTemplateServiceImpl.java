@@ -1,5 +1,6 @@
 package com.coderank.service.backend.question.impl;
 
+import com.coderank.common.enums.ResultCodeEnum;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.coderank.entity.dto.question.QuestionCodeTemplateCreateDTO;
 import com.coderank.entity.dto.question.QuestionCodeTemplateUpdateDTO;
@@ -10,7 +11,6 @@ import com.coderank.exception.BusinessException;
 import com.coderank.mapper.backend.question.QuestionCodeTemplateMapper;
 import com.coderank.mapper.backend.question.QuestionMapper;
 import com.coderank.service.backend.question.QuestionCodeTemplateService;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -36,7 +36,7 @@ public class QuestionCodeTemplateServiceImpl implements QuestionCodeTemplateServ
     @Override
     public List<QuestionCodeTemplateVO> listByQuestionId(Long questionId) {
         if (questionMapper.selectById(questionId) == null) {
-            throw new BusinessException(404, "题目不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "题目不存在");
         }
         List<QuestionCodeTemplate> templates = templateMapper.selectList(
                 new LambdaQueryWrapper<QuestionCodeTemplate>()
@@ -50,7 +50,7 @@ public class QuestionCodeTemplateServiceImpl implements QuestionCodeTemplateServ
     public QuestionCodeTemplateVO getTemplateById(Long id) {
         QuestionCodeTemplate template = templateMapper.selectById(id);
         if (template == null) {
-            throw new BusinessException(404, "代码模板不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "代码模板不存在");
         }
         return toVO(template);
     }
@@ -59,14 +59,18 @@ public class QuestionCodeTemplateServiceImpl implements QuestionCodeTemplateServ
     @Override
     public Long createTemplate(QuestionCodeTemplateCreateDTO createDTO) {
         if (questionMapper.selectById(createDTO.getQuestionId()) == null) {
-            throw new BusinessException(404, "题目不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "题目不存在");
         }
         if (existsLanguage(createDTO.getQuestionId(), createDTO.getLanguage(), null)) {
-            throw new BusinessException(409, "该语言的代码模板已存在");
+            throw new BusinessException(ResultCodeEnum.CONFLICT, "该语言的代码模板已存在");
         }
 
-        QuestionCodeTemplate template = new QuestionCodeTemplate();
-        BeanUtils.copyProperties(createDTO, template);
+        QuestionCodeTemplate template = QuestionCodeTemplate.builder()
+                .questionId(createDTO.getQuestionId())
+                .language(createDTO.getLanguage())
+                .template(createDTO.getTemplate())
+                .stubTemplate(createDTO.getStubTemplate())
+                .build();
         templateMapper.insert(template);
         return template.getId();
     }
@@ -76,18 +80,22 @@ public class QuestionCodeTemplateServiceImpl implements QuestionCodeTemplateServ
     public void updateTemplate(QuestionCodeTemplateUpdateDTO updateDTO) {
         QuestionCodeTemplate existing = templateMapper.selectById(updateDTO.getId());
         if (existing == null) {
-            throw new BusinessException(404, "代码模板不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "代码模板不存在");
         }
         if (updateDTO.getLanguage() != null
                 && existsLanguage(existing.getQuestionId(), updateDTO.getLanguage(), updateDTO.getId())) {
-            throw new BusinessException(409, "该语言的代码模板已存在");
+            throw new BusinessException(ResultCodeEnum.CONFLICT, "该语言的代码模板已存在");
         }
         if (updateDTO.getTemplate() != null && !StringUtils.hasText(updateDTO.getTemplate())) {
-            throw new BusinessException(400, "初始代码不能为空");
+            throw new BusinessException(ResultCodeEnum.BAD_REQUEST, "初始代码不能为空");
         }
 
-        QuestionCodeTemplate template = new QuestionCodeTemplate();
-        BeanUtils.copyProperties(updateDTO, template);
+        QuestionCodeTemplate template = QuestionCodeTemplate.builder()
+                .id(updateDTO.getId())
+                .language(updateDTO.getLanguage())
+                .template(updateDTO.getTemplate())
+                .stubTemplate(updateDTO.getStubTemplate())
+                .build();
         templateMapper.updateById(template);
     }
 
@@ -95,7 +103,7 @@ public class QuestionCodeTemplateServiceImpl implements QuestionCodeTemplateServ
     @Override
     public void deleteTemplate(Long id) {
         if (templateMapper.selectById(id) == null) {
-            throw new BusinessException(404, "代码模板不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "代码模板不存在");
         }
         templateMapper.deleteById(id);
     }
@@ -113,8 +121,14 @@ public class QuestionCodeTemplateServiceImpl implements QuestionCodeTemplateServ
 
     // 实体转视图对象
     private QuestionCodeTemplateVO toVO(QuestionCodeTemplate template) {
-        QuestionCodeTemplateVO vo = new QuestionCodeTemplateVO();
-        BeanUtils.copyProperties(template, vo);
-        return vo;
+        return QuestionCodeTemplateVO.builder()
+                .id(template.getId())
+                .questionId(template.getQuestionId())
+                .language(template.getLanguage())
+                .template(template.getTemplate())
+                .stubTemplate(template.getStubTemplate())
+                .createTime(template.getCreateTime())
+                .updateTime(template.getUpdateTime())
+                .build();
     }
 }

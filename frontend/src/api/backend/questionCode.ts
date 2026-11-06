@@ -7,6 +7,7 @@ export interface QuestionCodeTemplateVO {
   questionId: string
   language: number
   template: string
+  stubTemplate: string | null
   createTime: string
   updateTime: string
 }
@@ -16,6 +17,7 @@ export interface QuestionCodeTemplateCreatePayload {
   questionId: string
   language: number
   template: string
+  stubTemplate?: string
 }
 
 // 修改代码模板参数
@@ -23,6 +25,7 @@ export interface QuestionCodeTemplateUpdatePayload {
   id: string
   language?: number
   template?: string
+  stubTemplate?: string
 }
 
 // 测试用例信息

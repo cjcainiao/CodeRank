@@ -1,5 +1,6 @@
 package com.coderank.service.backend.question.impl;
 
+import com.coderank.common.enums.ResultCodeEnum;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.coderank.common.result.PageResult;
@@ -22,7 +23,6 @@ import com.coderank.properties.FileUploadProperties;
 import com.coderank.service.backend.question.QuestionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -140,11 +140,10 @@ public class QuestionServiceImpl implements QuestionService {
                 QuestionTag::getQuestionId,
                 Collectors.mapping(relation -> String.valueOf(relation.getTagId()), Collectors.toList())));
 
-        return questions.stream().map(question -> {
-            QuestionVO vo = toVO(question);
-            vo.setTagIds(tagIdsByQuestion.getOrDefault(question.getId(), Collections.emptyList()));
-            return vo;
-        }).toList();
+        return questions.stream()
+                .map(question -> toVO(question,
+                        tagIdsByQuestion.getOrDefault(question.getId(), Collections.emptyList())))
+                .toList();
     }
 
     // 按白名单字段排序，未知字段回退到 id
@@ -161,7 +160,7 @@ public class QuestionServiceImpl implements QuestionService {
     public QuestionVO getQuestionById(Long id) {
         Question question = questionMapper.selectById(id);
         if (question == null) {
-            throw new BusinessException(404, "题目不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "题目不存在");
         }
         return toVOList(List.of(question)).get(0);
     }
@@ -172,17 +171,22 @@ public class QuestionServiceImpl implements QuestionService {
     public Long createQuestion(QuestionCreateDTO createDTO) {
         String sampleCases = resolveSampleCases(createDTO.getSampleCases());
 
-        Question question = new Question();
-        BeanUtils.copyProperties(createDTO, question);
-        question.setSampleCases(sampleCases);
-        question.setDifficulty(createDTO.getDifficulty() == null ? DIFFICULTY_EASY : createDTO.getDifficulty());
-        question.setJudgeMode(createDTO.getJudgeMode() == null ? JUDGE_MODE_STANDARD : createDTO.getJudgeMode());
-        question.setTimeLimit(createDTO.getTimeLimit() == null ? DEFAULT_TIME_LIMIT : createDTO.getTimeLimit());
-        question.setMemoryLimit(
-                createDTO.getMemoryLimit() == null ? DEFAULT_MEMORY_LIMIT : createDTO.getMemoryLimit());
-        question.setStatus(createDTO.getStatus() == null ? STATUS_DRAFT : createDTO.getStatus());
-        question.setSubmitCount(0);
-        question.setAcceptedCount(0);
+        Question question = Question.builder()
+                .title(createDTO.getTitle())
+                .difficulty(createDTO.getDifficulty() == null ? DIFFICULTY_EASY : createDTO.getDifficulty())
+                .judgeMode(createDTO.getJudgeMode() == null ? JUDGE_MODE_STANDARD : createDTO.getJudgeMode())
+                .description(createDTO.getDescription())
+                .inputFormat(createDTO.getInputFormat())
+                .outputFormat(createDTO.getOutputFormat())
+                .sampleCases(sampleCases)
+                .hint(createDTO.getHint())
+                .timeLimit(createDTO.getTimeLimit() == null ? DEFAULT_TIME_LIMIT : createDTO.getTimeLimit())
+                .memoryLimit(createDTO.getMemoryLimit() == null ? DEFAULT_MEMORY_LIMIT : createDTO.getMemoryLimit())
+                .source(createDTO.getSource())
+                .status(createDTO.getStatus() == null ? STATUS_DRAFT : createDTO.getStatus())
+                .submitCount(0)
+                .acceptedCount(0)
+                .build();
 
         questionMapper.insert(question);
         saveQuestionTags(question.getId(), createDTO.getTagIds());
@@ -195,11 +199,24 @@ public class QuestionServiceImpl implements QuestionService {
     public void updateQuestion(QuestionUpdateDTO updateDTO) {
         Question existing = questionMapper.selectById(updateDTO.getId());
         if (existing == null) {
-            throw new BusinessException(404, "题目不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "题目不存在");
         }
 
-        Question question = new Question();
-        BeanUtils.copyProperties(updateDTO, question);
+        Question question = Question.builder()
+                .id(updateDTO.getId())
+                .title(updateDTO.getTitle())
+                .difficulty(updateDTO.getDifficulty())
+                .judgeMode(updateDTO.getJudgeMode())
+                .description(updateDTO.getDescription())
+                .inputFormat(updateDTO.getInputFormat())
+                .outputFormat(updateDTO.getOutputFormat())
+                .sampleCases(updateDTO.getSampleCases())
+                .hint(updateDTO.getHint())
+                .timeLimit(updateDTO.getTimeLimit())
+                .memoryLimit(updateDTO.getMemoryLimit())
+                .source(updateDTO.getSource())
+                .status(updateDTO.getStatus())
+                .build();
         // 未传样例时保持原值，传了才校验并覆盖
         if (updateDTO.getSampleCases() != null) {
             question.setSampleCases(resolveSampleCases(updateDTO.getSampleCases()));
@@ -217,7 +234,7 @@ public class QuestionServiceImpl implements QuestionService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteQuestion(Long id) {
         if (questionMapper.selectById(id) == null) {
-            throw new BusinessException(404, "题目不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "题目不存在");
         }
         questionMapper.deleteById(id);
         questionTagMapper.delete(new LambdaQueryWrapper<QuestionTag>()
@@ -258,9 +275,10 @@ public class QuestionServiceImpl implements QuestionService {
             return;
         }
         tagIds.stream().distinct().forEach(tagId -> {
-            QuestionTag relation = new QuestionTag();
-            relation.setQuestionId(questionId);
-            relation.setTagId(tagId);
+            QuestionTag relation = QuestionTag.builder()
+                    .questionId(questionId)
+                    .tagId(tagId)
+                    .build();
             questionTagMapper.insert(relation);
         });
     }
@@ -279,18 +297,35 @@ public class QuestionServiceImpl implements QuestionService {
         }
         try {
             if (!objectMapper.readTree(sampleCases).isArray()) {
-                throw new BusinessException(400, "样例须为 JSON 数组");
+                throw new BusinessException(ResultCodeEnum.BAD_REQUEST, "样例须为 JSON 数组");
             }
         } catch (JsonProcessingException e) {
-            throw new BusinessException(400, "样例不是合法的 JSON");
+            throw new BusinessException(ResultCodeEnum.BAD_REQUEST, "样例不是合法的 JSON");
         }
         return sampleCases;
     }
 
     // 实体转视图对象
-    private QuestionVO toVO(Question question) {
-        QuestionVO vo = new QuestionVO();
-        BeanUtils.copyProperties(question, vo);
-        return vo;
+    private QuestionVO toVO(Question question, List<String> tagIds) {
+        return QuestionVO.builder()
+                .id(question.getId())
+                .title(question.getTitle())
+                .difficulty(question.getDifficulty())
+                .judgeMode(question.getJudgeMode())
+                .description(question.getDescription())
+                .inputFormat(question.getInputFormat())
+                .outputFormat(question.getOutputFormat())
+                .sampleCases(question.getSampleCases())
+                .hint(question.getHint())
+                .timeLimit(question.getTimeLimit())
+                .memoryLimit(question.getMemoryLimit())
+                .source(question.getSource())
+                .status(question.getStatus())
+                .submitCount(question.getSubmitCount())
+                .acceptedCount(question.getAcceptedCount())
+                .tagIds(tagIds)
+                .createTime(question.getCreateTime())
+                .updateTime(question.getUpdateTime())
+                .build();
     }
 }

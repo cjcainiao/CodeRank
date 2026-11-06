@@ -7,7 +7,9 @@ import com.coderank.entity.dto.judge.JudgeMachineQueryDTO;
 import com.coderank.entity.dto.judge.JudgeMachineUpdateDTO;
 import com.coderank.entity.vo.judge.JudgeMachineCheckVO;
 import com.coderank.entity.vo.judge.JudgeMachineVO;
+import com.coderank.entity.vo.judge.JudgeMetricsVO;
 import com.coderank.service.backend.judge.JudgeMachineService;
+import com.coderank.service.backend.judge.JudgeMetricsService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,8 +31,12 @@ public class JudgeMachineController {
 
     private final JudgeMachineService judgeMachineService;
 
-    public JudgeMachineController(JudgeMachineService judgeMachineService) {
+    private final JudgeMetricsService judgeMetricsService;
+
+    public JudgeMachineController(JudgeMachineService judgeMachineService,
+                                  JudgeMetricsService judgeMetricsService) {
         this.judgeMachineService = judgeMachineService;
+        this.judgeMetricsService = judgeMetricsService;
     }
 
     // 分页查询评测机
@@ -75,5 +81,11 @@ public class JudgeMachineController {
     @PostMapping("/check-all")
     public Result<List<JudgeMachineCheckVO>> checkAllMachines() {
         return Result.success(judgeMachineService.checkAllMachines());
+    }
+
+    // 抓取评测机运行指标
+    @GetMapping("/{id}/metrics")
+    public Result<JudgeMetricsVO> getMetrics(@PathVariable Long id) {
+        return Result.success(judgeMetricsService.getMetrics(id));
     }
 }

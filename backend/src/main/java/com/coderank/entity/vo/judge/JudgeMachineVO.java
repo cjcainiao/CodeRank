@@ -2,7 +2,10 @@ package com.coderank.entity.vo.judge;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -11,6 +14,9 @@ import java.time.LocalDateTime;
  * 评测机视图对象。
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class JudgeMachineVO implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -60,6 +66,9 @@ public class JudgeMachineVO implements Serializable {
 
     /** 备注 */
     private String remark;
+
+    /** 指标地址，未开启监控时为空 */
+    private String metricsEndpoint;
 
     /** 创建时间 */
     private LocalDateTime createTime;

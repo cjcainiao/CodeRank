@@ -1,10 +1,13 @@
 package com.coderank.service.home.impl;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.coderank.common.enums.ResultCodeEnum;
 import com.coderank.common.result.PageResult;
 import com.coderank.entity.dto.question.QuestionBankQueryDTO;
 import com.coderank.entity.pojo.Question;
 import com.coderank.entity.pojo.QuestionCodeTemplate;
+import com.coderank.entity.pojo.QuestionTestCase;
 import com.coderank.entity.pojo.QuestionTag;
 import com.coderank.entity.pojo.Tag;
 import com.coderank.entity.vo.question.QuestionBankItemVO;
@@ -12,15 +15,16 @@ import com.coderank.entity.vo.question.QuestionDetailVO;
 import com.coderank.entity.vo.question.TagOptionVO;
 import com.coderank.exception.BusinessException;
 import com.coderank.mapper.backend.question.QuestionCodeTemplateMapper;
+import com.coderank.mapper.backend.question.QuestionTestCaseMapper;
 import com.coderank.mapper.backend.question.QuestionMapper;
 import com.coderank.mapper.backend.question.QuestionTagMapper;
 import com.coderank.mapper.backend.question.TagMapper;
 
 
 import com.coderank.service.home.QuestionBankService;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +51,12 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     /** 题目状态：已发布 */
     private static final int STATUS_PUBLISHED = 1;
 
+    /** 判题模式：核心代码 */
+    private static final int JUDGE_MODE_CORE = 2;
+
+    /** 用例可见性：展示 */
+    private static final int VISIBLE_SHOWN = 1;
+
     private final QuestionMapper questionMapper;
 
     private final QuestionTagMapper questionTagMapper;
@@ -55,14 +65,18 @@ public class QuestionBankServiceImpl implements QuestionBankService {
 
     private final QuestionCodeTemplateMapper codeTemplateMapper;
 
+    private final QuestionTestCaseMapper testCaseMapper;
+
     public QuestionBankServiceImpl(QuestionMapper questionMapper,
                                    QuestionTagMapper questionTagMapper,
                                    TagMapper tagMapper,
-                                   QuestionCodeTemplateMapper codeTemplateMapper) {
+                                   QuestionCodeTemplateMapper codeTemplateMapper,
+                                   QuestionTestCaseMapper testCaseMapper) {
         this.questionMapper = questionMapper;
         this.questionTagMapper = questionTagMapper;
         this.tagMapper = tagMapper;
         this.codeTemplateMapper = codeTemplateMapper;
+        this.testCaseMapper = testCaseMapper;
     }
 
     // 分页查询已发布的题目
@@ -115,25 +129,63 @@ public class QuestionBankServiceImpl implements QuestionBankService {
         Question question = questionMapper.selectById(id);
         // 草稿与下架题不对用户开放
         if (question == null || question.getStatus() == null || question.getStatus() != STATUS_PUBLISHED) {
-            throw new BusinessException(404, "题目不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "题目不存在");
         }
-
-        QuestionDetailVO vo = new QuestionDetailVO();
-        BeanUtils.copyProperties(question, vo);
-        vo.setTags(listTagNames(id));
 
         List<QuestionCodeTemplate> templates = codeTemplateMapper.selectList(
                 new LambdaQueryWrapper<QuestionCodeTemplate>()
                         .eq(QuestionCodeTemplate::getQuestionId, id)
                         .orderByAsc(QuestionCodeTemplate::getLanguage));
-        vo.setCodeTemplates(templates.stream().map(template -> {
-            QuestionDetailVO.CodeTemplate item = new QuestionDetailVO.CodeTemplate();
-            item.setLanguage(template.getLanguage());
-            item.setTemplate(template.getTemplate());
-            return item;
-        }).toList());
 
-        return vo;
+        return QuestionDetailVO.builder()
+                .id(question.getId())
+                .title(question.getTitle())
+                .difficulty(question.getDifficulty())
+                .judgeMode(question.getJudgeMode())
+                .description(question.getDescription())
+                .inputFormat(question.getInputFormat())
+                .outputFormat(question.getOutputFormat())
+                .sampleCases(question.getSampleCases())
+                .hint(question.getHint())
+                .timeLimit(question.getTimeLimit())
+                .memoryLimit(question.getMemoryLimit())
+                .source(question.getSource())
+                .submitCount(question.getSubmitCount())
+                .acceptedCount(question.getAcceptedCount())
+                .tags(listTagNames(id))
+                .codeTemplates(templates.stream().map(this::toCodeTemplate).toList())
+                .testCases(listTestCaseSamples(question))
+                .build();
+    }
+
+    // 模板实体转内嵌视图对象
+    private QuestionDetailVO.CodeTemplate toCodeTemplate(QuestionCodeTemplate template) {
+        return QuestionDetailVO.CodeTemplate.builder()
+                .language(template.getLanguage())
+                .template(template.getTemplate())
+                .build();
+    }
+
+    // 测试运行可快捷填入的用例，只返回展示型用例，隐藏用例连输入都不能暴露
+    private List<QuestionDetailVO.TestCaseSample> listTestCaseSamples(Question question) {
+        List<QuestionTestCase> testCaseList = testCaseMapper.selectList(
+                new LambdaQueryWrapper<QuestionTestCase>()
+                        .eq(QuestionTestCase::getQuestionId, question.getId())
+                        .eq(QuestionTestCase::getVisible, VISIBLE_SHOWN)
+                        .orderByAsc(QuestionTestCase::getSortOrder)
+                        .orderByAsc(QuestionTestCase::getId));
+
+        boolean coreMode = Integer.valueOf(JUDGE_MODE_CORE).equals(question.getJudgeMode());
+        List<QuestionDetailVO.TestCaseSample> result = new ArrayList<>();
+        int caseNo = 1;
+        for (QuestionTestCase testCase : testCaseList) {
+            result.add(QuestionDetailVO.TestCaseSample.builder()
+                    .caseNo(caseNo++)
+                    .input(coreMode ? testCase.getArgs() : testCase.getInputData())
+                    .expected(coreMode ? testCase.getExpected() : testCase.getExpectedOut())
+                    .build());
+        }
+        return result;
     }
 
     // 查询题目挂载的标签名
@@ -155,11 +207,13 @@ public class QuestionBankServiceImpl implements QuestionBankService {
         List<Tag> tags = tagMapper.selectList(new LambdaQueryWrapper<Tag>()
                 .orderByAsc(Tag::getSortOrder)
                 .orderByAsc(Tag::getId));
-        return tags.stream().map(tag -> {
-            TagOptionVO vo = new TagOptionVO();
-            BeanUtils.copyProperties(tag, vo);
-            return vo;
-        }).toList();
+        return tags.stream()
+                .map(tag -> TagOptionVO.builder()
+                        .id(tag.getId())
+                        .name(tag.getName())
+                        .color(tag.getColor())
+                        .build())
+                .toList();
     }
 
     // 批量回填当前页题目的标签名，避免逐条查询
@@ -185,11 +239,16 @@ public class QuestionBankServiceImpl implements QuestionBankService {
                         QuestionTag::getQuestionId,
                         Collectors.mapping(relation -> tagNames.get(relation.getTagId()), Collectors.toList())));
 
-        return questions.stream().map(question -> {
-            QuestionBankItemVO vo = new QuestionBankItemVO();
-            BeanUtils.copyProperties(question, vo);
-            vo.setTags(namesByQuestion.getOrDefault(question.getId(), Collections.emptyList()));
-            return vo;
-        }).toList();
+        return questions.stream()
+                .map(question -> QuestionBankItemVO.builder()
+                        .id(question.getId())
+                        .title(question.getTitle())
+                        .difficulty(question.getDifficulty())
+                        .judgeMode(question.getJudgeMode())
+                        .submitCount(question.getSubmitCount())
+                        .acceptedCount(question.getAcceptedCount())
+                        .tags(namesByQuestion.getOrDefault(question.getId(), Collections.emptyList()))
+                        .build())
+                .toList();
     }
 }

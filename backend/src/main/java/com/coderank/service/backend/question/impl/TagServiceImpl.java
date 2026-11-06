@@ -1,5 +1,6 @@
 package com.coderank.service.backend.question.impl;
 
+import com.coderank.common.enums.ResultCodeEnum;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.coderank.common.result.PageResult;
@@ -11,7 +12,6 @@ import com.coderank.entity.vo.question.TagVO;
 import com.coderank.exception.BusinessException;
 import com.coderank.mapper.backend.question.TagMapper;
 import com.coderank.service.backend.question.TagService;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -79,7 +79,7 @@ public class TagServiceImpl implements TagService {
     public TagVO getTagById(Long id) {
         Tag tag = tagMapper.selectById(id);
         if (tag == null) {
-            throw new BusinessException(404, "标签不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "标签不存在");
         }
         return toVO(tag);
     }
@@ -88,12 +88,14 @@ public class TagServiceImpl implements TagService {
     @Override
     public Long createTag(TagCreateDTO createDTO) {
         if (existsName(createDTO.getName())) {
-            throw new BusinessException(409, "标签名已存在");
+            throw new BusinessException(ResultCodeEnum.CONFLICT, "标签名已存在");
         }
 
-        Tag tag = new Tag();
-        BeanUtils.copyProperties(createDTO, tag);
-        tag.setSortOrder(createDTO.getSortOrder() == null ? DEFAULT_SORT_ORDER : createDTO.getSortOrder());
+        Tag tag = Tag.builder()
+                .name(createDTO.getName())
+                .color(createDTO.getColor())
+                .sortOrder(createDTO.getSortOrder() == null ? DEFAULT_SORT_ORDER : createDTO.getSortOrder())
+                .build();
 
         tagMapper.insert(tag);
         return tag.getId();
@@ -104,14 +106,18 @@ public class TagServiceImpl implements TagService {
     public void updateTag(TagUpdateDTO updateDTO) {
         Tag existing = tagMapper.selectById(updateDTO.getId());
         if (existing == null) {
-            throw new BusinessException(404, "标签不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "标签不存在");
         }
         if (StringUtils.hasText(updateDTO.getName()) && existsNameExceptId(updateDTO.getName(), updateDTO.getId())) {
-            throw new BusinessException(409, "标签名已存在");
+            throw new BusinessException(ResultCodeEnum.CONFLICT, "标签名已存在");
         }
 
-        Tag tag = new Tag();
-        BeanUtils.copyProperties(updateDTO, tag);
+        Tag tag = Tag.builder()
+                .id(updateDTO.getId())
+                .name(updateDTO.getName())
+                .color(updateDTO.getColor())
+                .sortOrder(updateDTO.getSortOrder())
+                .build();
         tagMapper.updateById(tag);
     }
 
@@ -119,7 +125,7 @@ public class TagServiceImpl implements TagService {
     @Override
     public void deleteTag(Long id) {
         if (tagMapper.selectById(id) == null) {
-            throw new BusinessException(404, "标签不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "标签不存在");
         }
         tagMapper.deleteById(id);
     }
@@ -130,7 +136,7 @@ public class TagServiceImpl implements TagService {
                 .apply("lower(trim(name)) = lower(trim({0}))", name));
     }
 
-    // 标签名是否被除指定标签外的其他人使用
+    // 标签名是否被除指定标签外的记录占用
     private boolean existsNameExceptId(String name, Long id) {
         return tagMapper.exists(new LambdaQueryWrapper<Tag>()
                 .apply("lower(trim(name)) = lower(trim({0}))", name)
@@ -139,8 +145,13 @@ public class TagServiceImpl implements TagService {
 
     // 实体转视图对象
     private TagVO toVO(Tag tag) {
-        TagVO vo = new TagVO();
-        BeanUtils.copyProperties(tag, vo);
-        return vo;
+        return TagVO.builder()
+                .id(tag.getId())
+                .name(tag.getName())
+                .color(tag.getColor())
+                .sortOrder(tag.getSortOrder())
+                .createTime(tag.getCreateTime())
+                .updateTime(tag.getUpdateTime())
+                .build();
     }
 }

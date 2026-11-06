@@ -1,5 +1,6 @@
 package com.coderank.service.backend.question.impl;
 
+import com.coderank.common.enums.ResultCodeEnum;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.coderank.entity.dto.question.QuestionTestDataCreateDTO;
 import com.coderank.entity.dto.question.QuestionTestDataUpdateDTO;
@@ -10,7 +11,6 @@ import com.coderank.mapper.backend.question.QuestionMapper;
 import com.coderank.mapper.backend.question.QuestionTestDataMapper;
 import com.coderank.properties.FileUploadProperties;
 import com.coderank.service.backend.question.QuestionTestDataService;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -56,7 +56,7 @@ public class QuestionTestDataServiceImpl implements QuestionTestDataService {
     @Override
     public List<QuestionTestDataVO> listByQuestionId(Long questionId) {
         if (questionMapper.selectById(questionId) == null) {
-            throw new BusinessException(404, "题目不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "题目不存在");
         }
         List<QuestionTestData> testDataList = testDataMapper.selectList(
                 new LambdaQueryWrapper<QuestionTestData>()
@@ -70,7 +70,7 @@ public class QuestionTestDataServiceImpl implements QuestionTestDataService {
     public QuestionTestDataVO getTestDataById(Long id) {
         QuestionTestData testData = testDataMapper.selectById(id);
         if (testData == null) {
-            throw new BusinessException(404, "评测数据不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "评测数据不存在");
         }
         return toVO(testData);
     }
@@ -79,21 +79,22 @@ public class QuestionTestDataServiceImpl implements QuestionTestDataService {
     @Override
     public Long createTestData(QuestionTestDataCreateDTO createDTO) {
         if (questionMapper.selectById(createDTO.getQuestionId()) == null) {
-            throw new BusinessException(404, "题目不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "题目不存在");
         }
 
         int caseNo = createDTO.getCaseNo() == null
                 ? nextCaseNo(createDTO.getQuestionId()) : createDTO.getCaseNo();
         if (existsCaseNo(createDTO.getQuestionId(), caseNo, null)) {
-            throw new BusinessException(409, "该测试点编号已存在");
+            throw new BusinessException(ResultCodeEnum.CONFLICT, "该测试点编号已存在");
         }
 
-        QuestionTestData testData = new QuestionTestData();
-        BeanUtils.copyProperties(createDTO, testData);
-        testData.setCaseNo(caseNo);
-        testData.setInputSize(createDTO.getInputSize() == null ? 0L : createDTO.getInputSize());
-        testData.setOutputSize(createDTO.getOutputSize() == null ? 0L : createDTO.getOutputSize());
-        testData.setVisible(createDTO.getVisible() == null ? VISIBLE_HIDDEN : createDTO.getVisible());
+        QuestionTestData testData = QuestionTestData.builder()
+                .questionId(createDTO.getQuestionId())
+                .caseNo(caseNo)
+                .inputSize(createDTO.getInputSize() == null ? 0L : createDTO.getInputSize())
+                .outputSize(createDTO.getOutputSize() == null ? 0L : createDTO.getOutputSize())
+                .visible(createDTO.getVisible() == null ? VISIBLE_HIDDEN : createDTO.getVisible())
+                .build();
 
         testDataMapper.insert(testData);
         return testData.getId();
@@ -104,7 +105,7 @@ public class QuestionTestDataServiceImpl implements QuestionTestDataService {
     public Long uploadTestData(Long questionId, MultipartFile inputFile, MultipartFile outputFile,
                                Integer visible) {
         if (questionMapper.selectById(questionId) == null) {
-            throw new BusinessException(404, "题目不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "题目不存在");
         }
         validateFile(inputFile, EXTENSION_IN);
         validateFile(outputFile, EXTENSION_OUT);
@@ -126,15 +127,16 @@ public class QuestionTestDataServiceImpl implements QuestionTestDataService {
         } catch (IOException e) {
             deleteQuietly(inputPath);
             deleteQuietly(outputPath);
-            throw new BusinessException(500, "评测数据保存失败");
+            throw new BusinessException(ResultCodeEnum.SYSTEM_ERROR, "评测数据保存失败");
         }
 
-        QuestionTestData testData = new QuestionTestData();
-        testData.setQuestionId(questionId);
-        testData.setCaseNo(caseNo);
-        testData.setInputSize(inputFile.getSize());
-        testData.setOutputSize(outputFile.getSize());
-        testData.setVisible(visible == null ? VISIBLE_HIDDEN : visible);
+        QuestionTestData testData = QuestionTestData.builder()
+                .questionId(questionId)
+                .caseNo(caseNo)
+                .inputSize(inputFile.getSize())
+                .outputSize(outputFile.getSize())
+                .visible(visible == null ? VISIBLE_HIDDEN : visible)
+                .build();
 
         try {
             testDataMapper.insert(testData);
@@ -150,16 +152,16 @@ public class QuestionTestDataServiceImpl implements QuestionTestDataService {
     // 校验文件非空、扩展名在白名单内
     private void validateFile(MultipartFile file, String expectedExtension) {
         if (file == null || file.isEmpty()) {
-            throw new BusinessException(400, "评测数据文件不能为空");
+            throw new BusinessException(ResultCodeEnum.BAD_REQUEST, "评测数据文件不能为空");
         }
         String filename = file.getOriginalFilename();
         String extension = StringUtils.getFilenameExtension(filename);
         if (extension == null || !expectedExtension.equalsIgnoreCase(extension)) {
-            throw new BusinessException(400, "文件须为 ." + expectedExtension + " 格式");
+            throw new BusinessException(ResultCodeEnum.BAD_REQUEST, "文件须为 ." + expectedExtension + " 格式");
         }
         List<String> allowed = fileUploadProperties.getTestData().getAllowedExtensions();
         if (allowed != null && !allowed.contains(extension.toLowerCase(Locale.ROOT))) {
-            throw new BusinessException(400, "不允许的文件类型");
+            throw new BusinessException(ResultCodeEnum.BAD_REQUEST, "不允许的文件类型");
         }
     }
 
@@ -183,15 +185,20 @@ public class QuestionTestDataServiceImpl implements QuestionTestDataService {
     public void updateTestData(QuestionTestDataUpdateDTO updateDTO) {
         QuestionTestData existing = testDataMapper.selectById(updateDTO.getId());
         if (existing == null) {
-            throw new BusinessException(404, "评测数据不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "评测数据不存在");
         }
         if (updateDTO.getCaseNo() != null
                 && existsCaseNo(existing.getQuestionId(), updateDTO.getCaseNo(), updateDTO.getId())) {
-            throw new BusinessException(409, "该测试点编号已存在");
+            throw new BusinessException(ResultCodeEnum.CONFLICT, "该测试点编号已存在");
         }
 
-        QuestionTestData testData = new QuestionTestData();
-        BeanUtils.copyProperties(updateDTO, testData);
+        QuestionTestData testData = QuestionTestData.builder()
+                .id(updateDTO.getId())
+                .caseNo(updateDTO.getCaseNo())
+                .inputSize(updateDTO.getInputSize())
+                .outputSize(updateDTO.getOutputSize())
+                .visible(updateDTO.getVisible())
+                .build();
         testDataMapper.updateById(testData);
     }
 
@@ -200,7 +207,7 @@ public class QuestionTestDataServiceImpl implements QuestionTestDataService {
     public void deleteTestData(Long id) {
         QuestionTestData existing = testDataMapper.selectById(id);
         if (existing == null) {
-            throw new BusinessException(404, "评测数据不存在");
+            throw new BusinessException(ResultCodeEnum.NOT_FOUND, "评测数据不存在");
         }
         testDataMapper.deleteById(id);
         deleteCaseFiles(existing.getQuestionId(), existing.getCaseNo());
@@ -239,8 +246,15 @@ public class QuestionTestDataServiceImpl implements QuestionTestDataService {
 
     // 实体转视图对象
     private QuestionTestDataVO toVO(QuestionTestData testData) {
-        QuestionTestDataVO vo = new QuestionTestDataVO();
-        BeanUtils.copyProperties(testData, vo);
-        return vo;
+        return QuestionTestDataVO.builder()
+                .id(testData.getId())
+                .questionId(testData.getQuestionId())
+                .caseNo(testData.getCaseNo())
+                .inputSize(testData.getInputSize())
+                .outputSize(testData.getOutputSize())
+                .visible(testData.getVisible())
+                .createTime(testData.getCreateTime())
+                .updateTime(testData.getUpdateTime())
+                .build();
     }
 }

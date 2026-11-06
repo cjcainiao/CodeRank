@@ -5,7 +5,10 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -13,6 +16,9 @@ import java.time.LocalDateTime;
  * 评测机表实体。
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @TableName("judge_machine")
 public class JudgeMachine {
 
@@ -61,6 +67,9 @@ public class JudgeMachine {
 
     /** 备注 */
     private String remark;
+
+    /** 指标地址，未开启监控时为空 */
+    private String metricsEndpoint;
 
     /** 创建时间 */
     @TableField(fill = FieldFill.INSERT)

@@ -62,4 +62,8 @@ public class JudgeMachineCreateDTO {
     /** 备注 */
     @Size(max = 255, message = "备注长度不能超过 255")
     private String remark;
+
+    /** 指标地址，如 http://127.0.0.1:5052 */
+    @Size(max = 255, message = "指标地址长度不能超过 255")
+    private String metricsEndpoint;
 }

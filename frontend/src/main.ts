@@ -1,3 +1,4 @@
+// 应用初始化，注册路由、状态与组件库
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'

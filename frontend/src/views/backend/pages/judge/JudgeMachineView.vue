@@ -97,6 +97,13 @@
         <el-form-item label="服务地址" prop="endpoint">
           <el-input v-model="form.endpoint" placeholder="如 http://127.0.0.1:5050" maxlength="255" />
         </el-form-item>
+        <el-form-item label="指标地址">
+          <el-input
+            v-model="form.metricsEndpoint"
+            placeholder="如 http://127.0.0.1:5052，未开启监控时留空"
+            maxlength="255"
+          />
+        </el-form-item>
         <el-form-item label="认证令牌">
           <el-input
             v-model="form.authToken"
@@ -201,6 +208,7 @@ const filters = reactive<{ name: string; status?: number }>({
 const form = ref({
   name: '',
   endpoint: '',
+  metricsEndpoint: '',
   authToken: '',
   status: STATUS_ENABLED,
   weight: 1,
@@ -260,6 +268,7 @@ function handleSizeChange() {
 function resetForm() {
   form.value.name = ''
   form.value.endpoint = ''
+  form.value.metricsEndpoint = ''
   form.value.authToken = ''
   form.value.status = STATUS_ENABLED
   form.value.weight = 1
@@ -284,6 +293,7 @@ function openEdit(row: JudgeMachineVO) {
   editingId.value = row.id
   form.value.name = row.name
   form.value.endpoint = row.endpoint
+  form.value.metricsEndpoint = row.metricsEndpoint ?? ''
   form.value.authToken = ''
   form.value.status = row.status
   form.value.weight = row.weight
@@ -307,6 +317,7 @@ async function submit() {
     const payload = {
       name: form.value.name,
       endpoint: form.value.endpoint,
+      metricsEndpoint: form.value.metricsEndpoint || undefined,
       authToken: form.value.authToken || undefined,
       status: form.value.status,
       weight: form.value.weight,

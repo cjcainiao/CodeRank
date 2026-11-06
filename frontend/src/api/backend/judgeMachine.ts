@@ -18,6 +18,7 @@ export interface JudgeMachineVO {
   lastCheckTime: string | null
   lastCheckOk: number
   remark: string | null
+  metricsEndpoint: string | null
   createTime: string
   updateTime: string
 }
@@ -55,6 +56,7 @@ export interface JudgeMachineCreatePayload {
   procLimit?: number
   outputLimit?: number
   remark?: string
+  metricsEndpoint?: string
 }
 
 // 修改参数

@@ -1,5 +1,6 @@
 package com.coderank.exception;
 
+import com.coderank.common.enums.ResultCodeEnum;
 import com.coderank.common.result.Result;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -33,7 +34,7 @@ public class GlobalExceptionHandler {
     public Result<Void> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
         String msg = firstErrorMessage(e.getBindingResult().getFieldErrors());
         log.warn("参数校验失败：{}", msg);
-        return Result.error(400, msg);
+        return Result.error(ResultCodeEnum.BAD_REQUEST, msg);
     }
 
     // 表单参数绑定失败
@@ -41,7 +42,7 @@ public class GlobalExceptionHandler {
     public Result<Void> handleBindException(BindException e) {
         String msg = firstErrorMessage(e.getBindingResult().getFieldErrors());
         log.warn("参数绑定失败：{}", msg);
-        return Result.error(400, msg);
+        return Result.error(ResultCodeEnum.BAD_REQUEST, msg);
     }
 
     // 缺少必填参数
@@ -49,7 +50,7 @@ public class GlobalExceptionHandler {
     public Result<Void> handleMissingParameter(MissingServletRequestParameterException e) {
         String msg = "缺少必填参数：" + e.getParameterName();
         log.warn(msg);
-        return Result.error(400, msg);
+        return Result.error(ResultCodeEnum.BAD_REQUEST, msg);
     }
 
     // 参数类型不匹配
@@ -57,7 +58,7 @@ public class GlobalExceptionHandler {
     public Result<Void> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
         String msg = "参数类型错误：" + e.getName();
         log.warn(msg);
-        return Result.error(400, msg);
+        return Result.error(ResultCodeEnum.BAD_REQUEST, msg);
     }
 
     // 兜底异常
@@ -65,7 +66,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Result<Void> handleException(Exception e) {
         log.error("系统异常", e);
-        return Result.error("系统繁忙，请稍后再试");
+        return Result.error(ResultCodeEnum.SYSTEM_ERROR);
     }
 
     // 取第一条校验错误信息

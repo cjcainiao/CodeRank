@@ -11,7 +11,7 @@ import { ElMessage } from 'element-plus'
 const AUTH_TOKEN_STORAGE_KEY = 'coderank-auth-token'
 
 // 成功状态码
-const CODE_SUCCESS = 0
+const CODE_SUCCESS = 200
 
 // 后端统一响应结构
 export interface ApiResult<T = unknown> {

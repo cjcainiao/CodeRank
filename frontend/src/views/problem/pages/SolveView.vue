@@ -1,4 +1,4 @@
-﻿<!-- 题目做题页面 -->
+<!-- 题目做题页面 -->
 <template>
   <section v-loading="loading" class="question-detail">
     <div v-if="detail" class="question-detail__grid">
@@ -82,7 +82,26 @@
           <div class="code-panel__test">
             <div class="code-panel__test-header">
               <span class="code-panel__test-title">测试用例</span>
-              <el-button link type="primary" @click="fillSample">填入示例</el-button>
+              <div class="code-panel__test-actions">
+                <el-select
+                  v-if="testCases.length"
+                  v-model="selectedCaseNo"
+                  class="code-panel__case-select"
+                  placeholder="选用例"
+                  clearable
+                  @change="fillCase"
+                >
+                  <el-option
+                    v-for="item in testCases"
+                    :key="item.caseNo"
+                    :label="`用例 ${item.caseNo}`"
+                    :value="item.caseNo"
+                  />
+                </el-select>
+                <el-button v-if="samples.length" link type="primary" @click="fillSample">
+                  填入示例
+                </el-button>
+              </div>
             </div>
 
             <div class="code-panel__test-grid">
@@ -95,7 +114,7 @@
                   :rows="4"
                   resize="vertical"
                   spellcheck="false"
-                  placeholder="手动输入测试数据"
+                  placeholder="手动输入测试数据，或从上方选用例"
                 />
               </label>
 
@@ -113,15 +132,17 @@
               </label>
             </div>
 
-            <el-button
-              class="code-panel__run"
-              type="primary"
-              :icon="Play"
-              :loading="running"
-              @click="runCode"
-            >
-              测试运行
-            </el-button>
+            <div class="code-panel__actions">
+              <el-button :icon="Play" :loading="running" @click="runCode">测试运行</el-button>
+              <el-button
+                type="primary"
+                :icon="Send"
+                :loading="submitting"
+                @click="submitCode"
+              >
+                提交评测
+              </el-button>
+            </div>
           </div>
 
           <div v-if="result" class="code-panel__result">
@@ -136,6 +157,58 @@
             <pre v-if="result.output" class="code-panel__result-output">{{ result.output }}</pre>
             <pre v-if="result.error" class="code-panel__result-error">{{ result.error }}</pre>
           </div>
+
+          <div v-if="judging || judgeResult" class="code-panel__judge">
+            <div class="code-panel__judge-header">
+              <span class="code-panel__judge-status" :class="judgeClass">
+                {{ judgeLabel }}
+              </span>
+              <span v-if="judgeResult?.totalCount" class="code-panel__judge-meta">
+                {{ judgeResult.passedCount ?? 0 }} / {{ judgeResult.totalCount }} 通过
+                <template v-if="judgeResult.timeUsed !== null">
+                  · {{ judgeResult.timeUsed }} ms / {{ judgeResult.memoryUsed }} KB
+                </template>
+              </span>
+            </div>
+
+            <el-progress
+              v-if="judging"
+              class="code-panel__judge-progress"
+              :percentage="100"
+              :indeterminate="true"
+              :duration="2"
+              :show-text="false"
+              :stroke-width="4"
+            />
+
+            <pre v-if="judgeResult?.message" class="code-panel__judge-message">{{
+              judgeResult.message
+            }}</pre>
+
+            <el-table
+              v-if="judgeResult?.cases?.length"
+              :data="judgeResult.cases"
+              size="small"
+              border
+              class="code-panel__judge-table"
+            >
+              <el-table-column prop="caseNo" label="测试点" width="80" align="center" />
+              <el-table-column label="结果" width="140">
+                <template #default="{ row }">
+                  <el-tag size="small" :type="row.passed ? 'success' : 'danger'">
+                    {{ row.status }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="time" label="耗时" width="90" align="right">
+                <template #default="{ row }">{{ row.time }} ms</template>
+              </el-table-column>
+              <el-table-column prop="memory" label="内存" width="100" align="right">
+                <template #default="{ row }">{{ row.memory }} KB</template>
+              </el-table-column>
+              <el-table-column prop="message" label="说明" min-width="180" show-overflow-tooltip />
+            </el-table>
+          </div>
         </article>
     </div>
 
@@ -144,15 +217,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Play, RotateCcw } from '@lucide/vue'
+import { Play, RotateCcw, Send } from '@lucide/vue'
 import MarkdownViewer from '@/components/editor/MarkdownViewer.vue'
 import { getQuestionDetail, type QuestionDetailVO } from '@/api/home/questionBank'
+import { runCode as requestRunCode } from '@/api/problem/runCode'
+import { submitCode as requestSubmitCode, getSubmissionStatus, type SubmissionStatusVO } from '@/api/problem/submitCode'
 
 // 判题模式：标准输入输出
 const JUDGE_MODE_STANDARD = 1
+
+// 评测任务轮询间隔，毫秒
+const POLL_INTERVAL_MS = 1000
 
 // 难度选项：1 简单，2 中等，3 困难
 const DIFFICULTY_OPTIONS = [
@@ -161,13 +239,13 @@ const DIFFICULTY_OPTIONS = [
   { value: 3, label: '困难' },
 ] as const
 
-// 语言选项，与后端枚举一致
+// 语言选项，value 对应题库模板的 language，code 对应评测机接口的语言标识
 const LANGUAGE_OPTIONS = [
-  { value: 1, label: 'Java' },
-  { value: 2, label: 'C++' },
-  { value: 3, label: 'Python' },
-  { value: 4, label: 'Go' },
-  { value: 5, label: 'JavaScript' },
+  { value: 1, code: 'java', label: 'Java' },
+  { value: 2, code: 'cpp', label: 'C++' },
+  { value: 3, code: 'python', label: 'Python' },
+  { value: 4, code: 'go', label: 'Go' },
+  { value: 5, code: 'javascript', label: 'JavaScript' },
 ] as const
 
 // 样例结构，与后端 sampleCases 的 JSON 元素对应
@@ -194,7 +272,14 @@ const language = ref<number>(1)
 const code = ref('')
 const testInput = ref('')
 const expectedOutput = ref('')
+const selectedCaseNo = ref<number | undefined>(undefined)
 const result = ref<RunResult | null>(null)
+const submitting = ref(false)
+const judging = ref(false)
+const judgeResult = ref<SubmissionStatusVO | null>(null)
+
+// 轮询定时器，离开页面时需要清理
+let pollTimer: number | null = null
 const questionId = computed(() => {
   const id = route.params.id
   return typeof id === 'string' ? id : ''
@@ -206,6 +291,9 @@ const availableLanguages = computed(() => {
   if (configured.size === 0) return LANGUAGE_OPTIONS
   return LANGUAGE_OPTIONS.filter((option) => configured.has(option.value))
 })
+
+// 测试运行可快捷填入的用例，来自后台维护的测试用例表
+const testCases = computed(() => detail.value?.testCases ?? [])
 
 // 解析后端返回的样例 JSON，结构异常时回退为空
 const samples = computed<SampleCase[]>(() => {
@@ -270,6 +358,15 @@ function fillSample() {
   expectedOutput.value = first.output
 }
 
+// 填入所选用例，隐藏用例只有输入没有期望输出
+function fillCase(caseNo: number | undefined) {
+  if (caseNo === undefined) return
+  const matched = testCases.value.find((item) => item.caseNo === caseNo)
+  if (!matched) return
+  testInput.value = matched.input ?? ''
+  expectedOutput.value = matched.expected ?? ''
+}
+
 // 逐行去除行尾空白与末尾空行后比较，与常见 OJ 的比对规则一致
 function normalizeOutput(text: string): string {
   return text
@@ -298,117 +395,40 @@ const resultClass = computed(() =>
   result.value?.status === 1 ? 'code-panel__result-status--ok' : 'code-panel__result-status--fail',
 )
 
-// 各语言的源文件名、编译命令与运行命令
-const LANGUAGE_CONFIG: Record<number, { filename: string; compile?: string[]; run: string[] }> = {
-  1: {
-    filename: 'Main.java',
-    compile: ['/usr/bin/javac', 'Main.java'],
-    run: ['/usr/bin/java', 'Main'],
-  },
-  2: {
-    filename: 'main.cpp',
-    compile: ['/usr/bin/g++', '-O2', '-o', 'main', 'main.cpp'],
-    run: ['./main'],
-  },
-  3: { filename: 'main.py', run: ['/usr/bin/python3', 'main.py'] },
-  4: {
-    filename: 'main.go',
-    compile: ['/usr/bin/go', 'build', '-o', 'main', 'main.go'],
-    run: ['./main'],
-  },
-  5: { filename: 'main.js', run: ['/usr/bin/node', 'main.js'] },
+// 提交结果对应的样式类
+const judgeClass = computed(() => {
+  if (judging.value) return ''
+  return judgeResult.value?.accepted
+    ? 'code-panel__judge-status--ok'
+    : 'code-panel__judge-status--fail'
+})
+
+// 提交结果的展示文案，评测中显示进度提示
+const judgeLabel = computed(() => {
+  if (judging.value) return '评测中…'
+  return judgeResult.value?.result ?? '-'
+})
+
+// 评测机状态到中文文案
+const STATUS_TEXT: Record<string, string> = {
+  Accepted: '运行完成',
+  'Time Limit Exceeded': '超出时间限制',
+  'Memory Limit Exceeded': '超出内存限制',
+  'Nonzero Exit Status': '运行错误',
+  'Runtime Error': '运行错误',
+  'Internal Error': '评测机内部错误',
+  'Invalid Request': '请求参数有误',
 }
 
-// 评测机地址，开发环境通过 vite 代理转发
-const JUDGE_ENDPOINT = '/judge'
-
-// 时间与内存上限，单位为评测机要求的纳秒与字节
-const CPU_LIMIT_NS = 5_000_000_000
-const CLOCK_LIMIT_NS = 10_000_000_000
-const MEMORY_LIMIT_BYTE = 268_435_456
-const OUTPUT_LIMIT_BYTE = 1_048_576
-
-// 评测机单条命令
-interface JudgeCmd {
-  args: string[]
-  env: string[]
-  files: { content?: string; name?: string; max?: number }[]
-  cpuLimit: number
-  clockLimit: number
-  memoryLimit: number
-  procLimit: number
-}
-
-// 评测机返回的单条结果
-interface JudgeResult {
-  status: string
-  exitStatus: number
-  error?: string
-  time: number
-  memory: number
-  files?: Record<string, string>
-}
-
-// 组装评测机请求，编译与运行分两步
-function buildJudgeCmds(config: (typeof LANGUAGE_CONFIG)[number]): JudgeCmd[] {
-  const env = ['PATH=/usr/bin:/bin:/usr/local/bin']
-  const limits = {
-    cpuLimit: CPU_LIMIT_NS,
-    clockLimit: CLOCK_LIMIT_NS,
-    memoryLimit: MEMORY_LIMIT_BYTE,
-    procLimit: 64,
-  }
-  const cmds: JudgeCmd[] = []
-
-  // 需要编译的语言先编译，源码通过首个文件写入
-  if (config.compile) {
-    cmds.push({
-      args: config.compile,
-      env,
-      files: [
-        { content: code.value },
-        { name: 'stdout', max: OUTPUT_LIMIT_BYTE },
-        { name: 'stderr', max: OUTPUT_LIMIT_BYTE },
-      ],
-      ...limits,
-    })
-  }
-
-  // 运行阶段：编译型语言直接读上一步的产物，解释型语言先把源码写入文件
-  const runFiles: JudgeCmd['files'] = []
-  if (!config.compile) {
-    runFiles.push({ name: config.filename, content: code.value })
-  }
-  runFiles.push({ content: testInput.value })
-  runFiles.push({ name: 'stdout', max: OUTPUT_LIMIT_BYTE })
-  runFiles.push({ name: 'stderr', max: OUTPUT_LIMIT_BYTE })
-
-  cmds.push({ args: config.run, env, files: runFiles, ...limits })
-  return cmds
-}
-
-// 把评测机状态翻译成用户能看懂的文案
-function translateStatus(status: string): string {
-  const map: Record<string, string> = {
-    Accepted: '运行完成',
-    'Time Limit Exceeded': '超出时间限制',
-    'Memory Limit Exceeded': '超出内存限制',
-    'Runtime Error': '运行错误',
-    'Internal Error': '评测机内部错误',
-    'Invalid Request': '请求参数有误',
-  }
-  return map[status] ?? status
-}
-
-// 运行代码，调用评测机执行
+// 运行代码，由后端挑选评测机执行
 async function runCode() {
   if (!code.value.trim()) {
     ElMessage.warning('请先编写代码')
     return
   }
 
-  const config = LANGUAGE_CONFIG[language.value]
-  if (!config) {
+  const option = LANGUAGE_OPTIONS.find((item) => item.value === language.value)
+  if (!option) {
     ElMessage.warning('暂不支持该语言')
     return
   }
@@ -416,44 +436,29 @@ async function runCode() {
   running.value = true
   result.value = null
   try {
-    const response = await fetch(`${JUDGE_ENDPOINT}/run`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cmd: buildJudgeCmds(config) }),
+    const response = await requestRunCode({
+      questionId: questionId.value,
+      language: option.code,
+      code: code.value,
+      input: testInput.value,
     })
-    if (!response.ok) throw new Error(`评测机返回 ${response.status}`)
 
-    const results = (await response.json()) as JudgeResult[]
-    const last = results[results.length - 1]
-    if (!last) throw new Error('评测机没有返回结果')
-
-    // 编译失败时直接展示编译器输出，不看运行结果
-    const compileResult = config.compile ? results[0] : undefined
-    if (compileResult && compileResult.status !== 'Accepted') {
-      result.value = {
-        status: 0,
-        output: '',
-        error: compileResult.files?.stderr || translateStatus(compileResult.status),
-        time: Math.round(compileResult.time / 1_000_000),
-        memory: Math.round(compileResult.memory / 1024),
-      }
-      return
-    }
-
-    const ok = last.status === 'Accepted'
-    const stdout = last.files?.stdout ?? ''
+    const stageText = response.stage === 'compile' ? '编译失败：' : ''
+    const ok = response.status === 'Accepted'
+    const stdout = response.stdout ?? ''
     // 填了预期输出时以比对结果决定状态
     const matched = ok ? matchExpected(stdout) : null
+
     result.value = {
       status: ok && matched !== false ? 1 : 0,
       output: stdout,
       error: ok
         ? matched === false
           ? '输出与预期不符'
-          : (last.files?.stderr ?? '')
-        : translateStatus(last.status),
-      time: Math.round(last.time / 1_000_000),
-      memory: Math.round(last.memory / 1024),
+          : (response.stderr ?? '')
+        : stageText + (response.stderr || response.error || STATUS_TEXT[response.status ?? ''] || '运行失败'),
+      time: response.time === null ? undefined : Math.round(response.time / 1_000_000),
+      memory: response.memory === null ? undefined : Math.round(response.memory / 1024),
     }
   } catch (error) {
     result.value = {
@@ -463,6 +468,77 @@ async function runCode() {
     }
   } finally {
     running.value = false
+  }
+}
+
+// 提交代码并同步评测全部测试点
+async function submitCode() {
+  if (!code.value.trim()) {
+    ElMessage.warning('请先编写代码')
+    return
+  }
+
+  const option = LANGUAGE_OPTIONS.find((item) => item.value === language.value)
+  if (!option) {
+    ElMessage.warning('暂不支持该语言')
+    return
+  }
+
+  submitting.value = true
+  judging.value = false
+  result.value = null
+  judgeResult.value = null
+  stopPolling()
+  try {
+    const submissionId = await requestSubmitCode({
+      questionId: questionId.value,
+      language: option.code,
+      code: code.value,
+    })
+    // 提交成功即进入评测中，同时开始轮询
+    judging.value = true
+    startPolling(submissionId)
+  } catch {
+    // 提交失败时保持未评测状态，错误提示由请求拦截器统一弹出
+    judging.value = false
+  } finally {
+    submitting.value = false
+  }
+}
+
+// 轮询评测任务状态，间隔取配置值
+function startPolling(submissionId: string) {
+  pollTimer = window.setInterval(() => {
+    void pollStatus(submissionId)
+  }, POLL_INTERVAL_MS)
+  // 首次立即查一次，避免必须等一个间隔才有反馈
+  void pollStatus(submissionId)
+}
+
+// 查一次任务状态，完成后停止轮询并展示结果
+async function pollStatus(submissionId: string) {
+  try {
+    const status = await getSubmissionStatus(submissionId)
+    judgeResult.value = status
+    if (status.finished) {
+      stopPolling()
+      judging.value = false
+      if (status.accepted) {
+        ElMessage.success('全部测试点通过')
+      }
+    }
+  } catch {
+    // 查询失败时停止轮询，避免持续弹错
+    stopPolling()
+    judging.value = false
+  }
+}
+
+// 停止轮询并清理定时器
+function stopPolling() {
+  if (pollTimer !== null) {
+    window.clearInterval(pollTimer)
+    pollTimer = null
   }
 }
 
@@ -484,6 +560,9 @@ async function loadDetail() {
 }
 
 onMounted(loadDetail)
+
+// 离开页面时停止轮询，避免定时器泄漏
+onUnmounted(stopPolling)
 </script>
 
 <style scoped>
@@ -649,6 +728,17 @@ onMounted(loadDetail)
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+}
+
+.code-panel__test-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.code-panel__case-select {
+  width: 120px;
 }
 
 .code-panel__test-title {
@@ -683,8 +773,10 @@ onMounted(loadDetail)
   line-height: 1.6;
 }
 
-/* 运行按钮紧跟在测试用例下方，靠右对齐 */
-.code-panel__run {
+/* 运行与提交按钮并排靠右 */
+.code-panel__actions {
+  display: flex;
+  gap: 8px;
   align-self: flex-end;
 }
 
@@ -734,6 +826,62 @@ onMounted(loadDetail)
 
 .code-panel__result-error {
   color: #ff375f;
+}
+
+/* 提交评测结果 */
+.code-panel__judge {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--problem-border);
+  border-radius: 8px;
+}
+
+.code-panel__judge-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.code-panel__judge-status {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.code-panel__judge-status--ok {
+  color: #00b8a3;
+}
+
+.code-panel__judge-status--fail {
+  color: #ff375f;
+}
+
+.code-panel__judge-meta {
+  color: var(--problem-muted);
+  font-size: 12px;
+}
+
+.code-panel__judge-progress {
+  width: 100%;
+}
+
+.code-panel__judge-message {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--problem-soft);
+  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.code-panel__judge-table {
+  font-size: 13px;
 }
 
 @media (max-width: 960px) {
