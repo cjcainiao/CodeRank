@@ -67,7 +67,7 @@ create index if not exists idx_question_sample_cases on question using gin (samp
 create table if not exists tag
 (
     id              bigint primary key,                                   -- 主键，雪花算法生成
-    name            varchar(50)           not null,                       -- 标签名，如二分、动态规划
+    name            varchar(50)           not null,                       -- 标签名，表示考查的算法或知识点，如二分查找、动态规划，不含难度
     color           varchar(20),                                          -- 标签颜色，十六进制色值
     sort_order      integer      default 0 not null,                      -- 排序值，越小越靠前
     create_time     timestamp    default current_timestamp not null,      -- 创建时间

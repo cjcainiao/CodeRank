@@ -26,7 +26,7 @@ public class Tag {
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
-    /** 标签名，如二分、动态规划 */
+    /** 标签名，表示题目考查的算法或知识点，如二分查找、动态规划，不含难度 */
     private String name;
 
     /** 标签颜色，十六进制色值 */

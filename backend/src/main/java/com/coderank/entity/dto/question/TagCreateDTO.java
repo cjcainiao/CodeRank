@@ -11,7 +11,7 @@ import lombok.Data;
 @Data
 public class TagCreateDTO {
 
-    /** 标签名，如二分、动态规划 */
+    /** 标签名，表示题目考查的算法或知识点，如二分查找、动态规划，不含难度 */
     @NotBlank(message = "标签名不能为空")
     @Size(max = 50, message = "标签名长度不能超过 50")
     private String name;
